@@ -1,4 +1,3 @@
-import { withLayoutContext } from "expo-router";
 
 export const Colors = {
   primaryColor: "#F27138",

@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
 
   btnContainer: {
-    paddingVertical: 16,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
