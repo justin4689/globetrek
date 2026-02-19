@@ -27,18 +27,31 @@ export default function VerifyOtp() {
 
        <View style = {styles.textContainer}>
 
-        <Text style = {styles.title}>Forgot  Password</Text>
-        <Text style = {styles.subtitle}>Enter your email and we’ll send you a link to reset your password</Text>
+        <Text style = {styles.title}>Cheick Your Email</Text>
+        <Text style = {styles.subtitle}>we sent a reset link to justin******@gmail.com. please enter 5 digit code that mentioned in the email</Text>
        </View>
 
        <View style = {styles.formContainer}>
          <View style = {styles.inputContainer}>
-           <Text style = {styles.label}>Email</Text>
            <TextInput 
             style = {styles.input}
-            placeholder = "Enter your email"
-            keyboardType = "email-address"
-            autoCapitalize = "none"
+            keyboardType = "numeric"
+            />
+             <TextInput 
+            style = {styles.input}
+            keyboardType = "numeric"
+            />
+             <TextInput 
+            style = {styles.input}
+            keyboardType = "numeric"
+            />
+             <TextInput 
+            style = {styles.input}
+            keyboardType = "numeric"
+            />
+              <TextInput 
+            style = {styles.input}
+            keyboardType = "numeric"
             />
           
          </View>
@@ -46,15 +59,15 @@ export default function VerifyOtp() {
 
          <Pressable onPress={() => console.log('Login pressed')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
           <View style = {styles.buttonContainer}>
-            <Text style = {styles.button}>Send Reset Link</Text>
+            <Text style = {styles.button}>Verify</Text>
           </View>
          </Pressable>
 
 
-          
+          <Text style = {styles.timer}> 03:00</Text>
 
-         <Pressable onPress={() =>  router.back()}>
-          <Text style = {styles.signIn}>Back to <Text style = {styles.signInLink}>Login</Text> </Text>
+         <Pressable onPress={() =>    console.log('Resend link pressed')}>
+          <Text style = {styles.signIn}>Haven’t got the email yet ?  <Text style = {styles.signInLink}>Resend Link</Text> </Text>
          </Pressable>
 
 
@@ -97,15 +110,14 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 14,
   },
-  label: {
-    fontSize: 14,
-    marginBottom: 8,
-    color: Colors.textColor,
-    fontFamily: Fonts.medium,
-  },
+  
   input: {
-    height: 48,
+    height: 50,
+    width: 50,
     borderColor: Colors.textColor,
     borderWidth: 1,
     borderRadius: 10,
@@ -137,6 +149,13 @@ const styles = StyleSheet.create({
   
   signInLink : {
     color: Colors.primaryColor,
+    fontFamily: Fonts.medium,
+  }  ,
+  
+  timer : {
+    marginTop: 24,
+    textAlign: "center",
+    color: Colors.textColor,
     fontFamily: Fonts.medium,
   }
 });

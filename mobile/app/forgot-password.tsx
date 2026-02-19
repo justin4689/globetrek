@@ -34,7 +34,6 @@ export default function ForgotPassword() {
 
        <View style = {styles.formContainer}>
          <View style = {styles.inputContainer}>
-           <Text style = {styles.label}>Email</Text>
            <TextInput 
             style = {styles.input}
             placeholder = "Enter your email"
@@ -45,7 +44,7 @@ export default function ForgotPassword() {
          </View>
        
 
-         <Pressable onPress={() => console.log('Login pressed')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
+         <Pressable onPress={() =>  router.push('/verify-otp')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
           <View style = {styles.buttonContainer}>
             <Text style = {styles.button}>Send Reset Link</Text>
           </View>
