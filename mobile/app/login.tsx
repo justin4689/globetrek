@@ -17,9 +17,7 @@ export default function Login() {
         <KeyboardAvoidingView
       
       behavior= {Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-      
-      <ScrollView contentContainerStyle={{ alignItems: 'center' , flexGrow: 1 }}
+      ><ScrollView contentContainerStyle={{ alignItems: 'center' , flexGrow: 1 }}
        showsVerticalScrollIndicator={false}
       >
 
@@ -82,7 +80,8 @@ export default function Login() {
 
        </View>
       
-       </ScrollView> </KeyboardAvoidingView>
+       </ScrollView>
+       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
