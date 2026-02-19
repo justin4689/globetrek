@@ -56,7 +56,7 @@ export default function Login() {
 
           
          </View>
-         <Text style = {styles.forgotPassword}>Forgot Password?</Text>
+         <Link href="/forgot-password"><Text style = {styles.forgotPassword}>Forgot Password?</Text></Link>
 
          <Pressable onPress={() => console.log('Login pressed')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
           <View style = {styles.buttonContainer}>
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.backgroundColor,
     fontFamily: Fonts.regular,
-    alignItems: "center",
     paddingHorizontal: 16
    
   },

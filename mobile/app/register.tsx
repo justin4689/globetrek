@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Link } from "expo-router";
+import {  router } from "expo-router";
 import { KeyboardAvoidingView } from "react-native";
 
 
@@ -91,7 +91,7 @@ export default function Register() {
 
          <Pressable onPress={() => console.log('Login pressed')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
           <View style = {styles.buttonContainer}>
-            <Text style = {styles.button}>Login</Text>
+            <Text style = {styles.button}>Register</Text>
           </View>
          </Pressable>
 
@@ -105,8 +105,9 @@ export default function Register() {
               Google</Text>
           </View>
          </Pressable>
-
-          <Text style = {styles.signUp}>Have an account? <Link href="/login"><Text style = {styles.signUpLink}> Login</Text></Link> </Text>
+            <Pressable onPress={() => router.back()}>
+          <Text style = {styles.signUp}>Have an account? <Text style = {styles.signUpLink}>Login</Text></Text>
+          </Pressable>
 
 
        </View>
