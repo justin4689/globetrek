@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { KeyboardAvoidingView } from "react-native";
 
 
@@ -58,7 +58,7 @@ export default function Login() {
          </View>
          <Link href="/forgot-password"><Text style = {styles.forgotPassword}>Forgot Password?</Text></Link>
 
-         <Pressable onPress={() => console.log('Login pressed')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
+         <Pressable onPress={() =>router.push('/(tabs)/home')} style = {({pressed}) => ({opacity: pressed ? 0.5 : 1})} >
           <View style = {styles.buttonContainer}>
             <Text style = {styles.button}>Login</Text>
           </View>
