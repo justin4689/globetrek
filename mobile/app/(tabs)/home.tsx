@@ -143,7 +143,12 @@ export default function Home() {
         {/* Destination cards grid */}
         <View style={styles.destinationsGrid}>
           {destinations.map((dest) => (
-            <View key={dest.id} style={styles.destinationCard}>
+            <TouchableOpacity
+              key={dest.id}
+              style={styles.destinationCard}
+              onPress={() => router.push({ pathname: "/destination/[id]" as any, params: { id: dest.id } })}
+              activeOpacity={0.95}
+            >
               <View style={styles.destImageContainer}>
                 <Image
                   source={dest.image}
@@ -193,7 +198,7 @@ export default function Home() {
                   </View>
                 </BlurView>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 

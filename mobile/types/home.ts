@@ -1,3 +1,11 @@
+export type Review = {
+  id: string;
+  name: string;
+  avatar: any;
+  rating: number;
+  text: string;
+};
+
 export type Category = {
   id: string;
   name: string;
@@ -11,6 +19,9 @@ export type Destination = {
   price: number;
   rating: number;
   image: any;
+  images: any[];
+  description: string;
+  reviews: Review[];
 };
 
 export type RecommendedItem = {
