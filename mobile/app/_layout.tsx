@@ -29,7 +29,19 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="dark-content" />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="filter-sheet"
+          options={{
+            presentation: "formSheet",
+            headerShown: false,
+            sheetAllowedDetents: [0.5],
+          
+            sheetCornerRadius: 24,
+          }}
+        />
+      </Stack>
     </SafeAreaProvider>
   );
 }
