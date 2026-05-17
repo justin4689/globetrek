@@ -2,6 +2,7 @@ import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Images from "@/utils/images";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   Image,
@@ -91,7 +92,7 @@ export default function Profil() {
 
           <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => router.push('/change-password')}>
             <View style={styles.menuLeft}>
               <View style={styles.menuIconWrapper}>
                 <Ionicons

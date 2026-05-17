@@ -25,7 +25,7 @@ export const destinations: Destination[] = [
       require("../assets/image/image13.jpg"),
       require("../assets/image/image14.jpg"),
       require("../assets/image/image15.jpg"),
-      require("../assets/image/benjamin-voros-AD6rn3vqG7o-unsplash.jpg"),
+      require("../assets/image/image16.jpg"),
     ],
     description:
       "Introduction :\nCopacabana est l'une des plages les plus célèbres au monde, située au cœur de Rio de Janeiro. Son sable doré s'étend sur plus de 4 km face à l'océan Atlantique, offrant une vue spectaculaire sur la baie et les montagnes environnantes.\n\nExpérience & activités :\nVous pourrez pratiquer le beach-volley, le surf ou simplement vous détendre sous le soleil brésilien. De nombreux restaurants et bars de plage proposent des caipirinhas fraîches et une cuisine locale savoureuse. Le soir, la promenade s'anime avec des musiciens et des artistes de rue.\n\nPourquoi visiter :\nCopacabana est idéale pour ceux qui souhaitent vivre l'énergie unique de Rio tout en profitant de la mer. L'ambiance festive, la culture locale et les paysages urbains spectaculaires en font une destination inoubliable.\n\nConseils pratiques :\nPrivilégiez la visite entre décembre et mars pour profiter du soleil estival brésilien. Gardez vos affaires en sécurité sur la plage et explorez le quartier en journée.",
@@ -67,7 +67,7 @@ export const destinations: Destination[] = [
       require("../assets/image/image13.jpg"),
       require("../assets/image/image14.jpg"),
       require("../assets/image/image15.jpg"),
-      require("../assets/image/elizeu-dias-RN6ts8IZ4_0-unsplash.jpg"),
+      require("../assets/image/image18.jpg"),
     ],
     description:
       "Introduction :\nWhitehaven Beach est reconnue comme l'une des plages les plus pures au monde, nichée au cœur du Parc Marin de la Grande Barrière de Corail en Australie. Son sable blanc siliceux à 98% lui confère une blancheur et une douceur exceptionnelles.\n\nExpérience & activités :\nExplorez Hill Inlet au lever du soleil pour contempler les tourbillons de sable blanc et d'eau turquoise. La plongée en apnée, la voile et les promenades en catamaran sont les activités phares de la région. Une faune marine exceptionnelle vous attend sous les eaux.\n\nPourquoi visiter :\nIsolée et préservée, Whitehaven Beach offre une expérience de nature pure, loin de l'agitation touristique. C'est l'une des rares plages au monde où le sable ne chauffe pas sous le soleil grâce à sa composition en silice.\n\nConseils pratiques :\nAccessible uniquement en bateau ou en hydravion depuis Airlie Beach. Prévoyez une journée complète pour profiter pleinement du site. Emportez vos propres provisions car il n'y a pas de commerces sur place.",
@@ -109,7 +109,7 @@ export const destinations: Destination[] = [
       require("../assets/image/image13.jpg"),
       require("../assets/image/image14.jpg"),
       require("../assets/image/image15.jpg"),
-      require("../assets/image/benjamin-voros-AD6rn3vqG7o-unsplash.jpg"),
+      require("../assets/image/image16.jpg"),
     ],
     description:
       "Introduction :\nL'archipel des Seychelles, composé de 115 îles dispersées dans l'océan Indien, est souvent décrit comme le paradis sur Terre. Ses plages de granit rose, ses eaux cristallines et sa végétation luxuriante en font une destination de rêve absolue.\n\nExpérience & activités :\nSnorkeling et plongée sous-marine parmi des récifs coralliens exceptionnels, kayak entre les formations rocheuses granitiques uniques, randonnées dans les réserves naturelles classées au patrimoine mondial. La réserve de Vallée de Mai abrite le célèbre coco de mer.\n\nPourquoi visiter :\nLes Seychelles offrent un luxe naturel incomparable, combinant plages idylliques, biodiversité unique et culture créole authentique. C'est une destination prisée pour les lunes de miel et les voyageurs en quête d'évasion totale.\n\nConseils pratiques :\nLa meilleure période de visite s'étend d'avril à mai et d'octobre à novembre. Louez un véhicule pour explorer les différentes plages de Mahé ou Praslin. Les resorts de luxe sont nombreux mais il existe aussi des guesthouses plus abordables.",
@@ -151,7 +151,7 @@ export const destinations: Destination[] = [
       require("../assets/image/image12.jpg"),
       require("../assets/image/image14.jpg"),
       require("../assets/image/image15.jpg"),
-      require("../assets/image/elizeu-dias-RN6ts8IZ4_0-unsplash.jpg"),
+      require("../assets/image/image18.jpg"),
     ],
     description:
       "Introduction :\nGrace Bay Beach est l'une des plages les plus emblématiques du monde, célèbre pour son sable blanc immaculé et ses eaux turquoise cristallines. Que vous souhaitiez vous détendre au soleil, nager dans une mer calme ou profiter des sports nautiques, cette plage offre une expérience inoubliable pour tous les voyageurs.\n\nExpérience & activités :\nVous pourrez explorer les récifs coralliens en snorkeling, faire des balades en kayak ou tout simplement flâner le long du rivage au coucher du soleil. Les restaurants et cafés à proximité offrent des plats locaux frais et des cocktails exotiques, parfaits pour compléter votre journée.\n\nPourquoi visiter :\nGrace Bay Beach est idéale pour les couples, les familles et les aventuriers. Chaque visiteur peut trouver son moment parfait, que ce soit en lisant un livre sur le sable chaud, en découvrant la vie marine ou en se laissant séduire par le charme local.\n\nConseils pratiques :\nLa période idéale pour visiter est de décembre à avril, lorsque le temps est ensoleillé et les vents faibles. Réservez à l'avance pendant les fêtes car les hébergements sont très demandés.",
