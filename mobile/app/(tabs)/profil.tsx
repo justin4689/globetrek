@@ -73,7 +73,7 @@ export default function Profil() {
         {/* Account Section */}
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}  onPress={() => router.push('/edit-profil')}>
             <View style={styles.menuLeft}>
               <View style={styles.menuIconWrapper}>
                 <Ionicons
