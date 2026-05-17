@@ -24,6 +24,7 @@ const Images = {
   image18: require("../assets/image/image18.jpg"),
   image19: require("../assets/image/Iimage19.jpg"),
   image20: require("../assets/image/image20.jpg"),
+  image21: require("../assets/image/image21.png"),
 };
 
 export default Images;

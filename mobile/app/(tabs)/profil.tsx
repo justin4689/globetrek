@@ -192,7 +192,7 @@ export default function Profil() {
           <View style={styles.divider} />
 
           {/* Help & Support */}
-          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => router.push('/help-support')}>
             <View style={styles.menuLeft}>
               <View style={styles.menuIconWrapper}>
                 <Ionicons
