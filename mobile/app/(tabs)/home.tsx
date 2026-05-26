@@ -67,12 +67,16 @@ export default function Home() {
           </View>
         </View>
         <View style={styles.headerRight}>
-          <View style={styles.bellWrapper}>
+          <TouchableOpacity
+            style={styles.bellWrapper}
+            onPress={() => router.push("/notifications")}
+            activeOpacity={0.8}
+          >
             <Ionicons name="notifications-outline" size={32} color="black" />
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
