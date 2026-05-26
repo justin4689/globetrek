@@ -179,11 +179,138 @@ export const destinations: Destination[] = [
       },
     ],
   },
+  {
+    id: "5",
+    name: "Mont Everest",
+    country: "Nepal",
+    price: 246,
+    rating: 4.8,
+    image: require("../assets/image/image16.jpg"),
+    images: [
+      require("../assets/image/image16.jpg"),
+      require("../assets/image/image3.jpg"),
+      require("../assets/image/image4.jpg"),
+      require("../assets/image/image5.jpg"),
+      require("../assets/image/image6.jpg"),
+      require("../assets/image/image7.jpg"),
+      require("../assets/image/image8.jpg"),
+    ],
+    description:
+      "Introduction :\nLe Mont Everest, point culminant de la Terre à 8 849 m d'altitude, est une destination mythique pour les aventuriers du monde entier. Situé dans l'Himalaya entre le Népal et le Tibet, il attire des milliers de trekkeurs chaque année vers ses camps de base.\n\nExpérience & activités :\nLe trek jusqu'au Camp de Base Everest (5 364 m) est l'une des randonnées les plus emblématiques au monde. En chemin, vous traverserez des villages sherpa authentiques, des monastères bouddhistes et des paysages himalayens à couper le souffle. La flore et la faune locales sont également fascinantes.\n\nPourquoi visiter :\nL'Everest représente le défi ultime et l'aventure humaine dans sa plus pure expression. Même sans atteindre le sommet, le trek vers le camp de base offre une expérience transformatrice face à la grandeur de la nature.\n\nConseils pratiques :\nLa meilleure période est d'octobre à novembre ou d'avril à mai. Prévoyez une acclimatation progressive à l'altitude. Engagez un guide local sherpa expérimenté et souscrivez une assurance rapatriement adaptée.",
+    reviews: [
+      {
+        id: "r1",
+        name: "Thomas Müller",
+        avatar,
+        rating: 5.0,
+        text: "An absolutely life-changing experience. The trek to Everest Base Camp pushed me to my limits and rewarded me with the most breathtaking views I have ever seen. The Sherpa guides are incredible.",
+      },
+      {
+        id: "r2",
+        name: "Claire Fontaine",
+        avatar,
+        rating: 4.7,
+        text: "Une aventure inoubliable. Les paysages himalayens sont d'une beauté saisissante. Les villages sherpa et les monastères ajoutent une dimension culturelle et spirituelle unique au voyage.",
+      },
+      {
+        id: "r3",
+        name: "Kenji Tanaka",
+        avatar,
+        rating: 4.8,
+        text: "Standing at Everest Base Camp was a dream come true. The journey is demanding but every step is worth it. Make sure to take time to acclimatize and enjoy the stunning scenery along the way.",
+      },
+    ],
+  },
+  {
+    id: "6",
+    name: "Paris",
+    country: "France",
+    price: 539,
+    rating: 4.8,
+    image: require("../assets/image/image1.jpg"),
+    images: [
+      require("../assets/image/image1.jpg"),
+      require("../assets/image/image2.jpg"),
+      require("../assets/image/image3.jpg"),
+      require("../assets/image/image4.jpg"),
+      require("../assets/image/image5.jpg"),
+      require("../assets/image/image6.jpg"),
+      require("../assets/image/image9.jpg"),
+    ],
+    description:
+      "Introduction :\nParis, la Ville Lumière, est l'une des destinations les plus visitées et les plus célébrées au monde. Capitale de la France, elle est reconnue mondialement pour son architecture élégante, sa gastronomie raffinée, ses musées de renommée mondiale et son atmosphère romantique unique.\n\nExpérience & activités :\nMontez au sommet de la Tour Eiffel pour une vue panoramique inoubliable, explorez le Louvre et ses trésors artistiques, flânez sur les Champs-Élysées et dégustez une pâtisserie dans un café parisien. Montmartre, le Marais et les bords de Seine offrent également une expérience authentique de la vie parisienne.\n\nPourquoi visiter :\nParis est la destination idéale pour les amateurs d'art, de culture, de mode et de gastronomie. Chaque quartier possède son propre caractère et ses propres trésors à découvrir. La ville est également parfaite pour les voyages romantiques en couple.\n\nConseils pratiques :\nLe printemps (avril-mai) et l'automne (septembre-octobre) sont les meilleures périodes pour visiter. Achetez vos billets pour les musées à l'avance et explorez la ville à pied ou à vélo pour en découvrir tous les recoins.",
+    reviews: [
+      {
+        id: "r1",
+        name: "Isabella Romano",
+        avatar,
+        rating: 4.9,
+        text: "Paris is simply magical. Every street, every café, every monument has its own story. The food is extraordinary and the art scene is world-class. I fell in love with this city completely.",
+      },
+      {
+        id: "r2",
+        name: "Lucas Bernard",
+        avatar,
+        rating: 4.7,
+        text: "Une ville magnifique qui ne déçoit jamais. La Tour Eiffel illuminée la nuit est un spectacle à ne pas manquer. Les musées sont exceptionnels et la cuisine parisienne est incomparable.",
+      },
+      {
+        id: "r3",
+        name: "Mia Johansson",
+        avatar,
+        rating: 5.0,
+        text: "The most romantic city in the world. Walking along the Seine at sunset, visiting hidden art galleries in Le Marais, having croissants at a street café — Paris is pure perfection.",
+      },
+    ],
+  },
+  {
+    id: "7",
+    name: "Machu Picchu",
+    country: "Peru",
+    price: 678,
+    rating: 4.8,
+    image: require("../assets/image/image2.jpg"),
+    images: [
+      require("../assets/image/image2.jpg"),
+      require("../assets/image/image3.jpg"),
+      require("../assets/image/image4.jpg"),
+      require("../assets/image/image5.jpg"),
+      require("../assets/image/image7.jpg"),
+      require("../assets/image/image8.jpg"),
+      require("../assets/image/image9.jpg"),
+    ],
+    description:
+      "Introduction :\nMachu Picchu, la cité inca perdue dans les nuages, est l'un des sites archéologiques les plus extraordinaires et les plus mystérieux du monde. Perchée à 2 430 m d'altitude dans les Andes péruviennes, cette ancienne cité inca classée au patrimoine mondial de l'UNESCO est un trésor de l'humanité.\n\nExpérience & activités :\nExplorez les terrasses agricoles, les temples solaires et les mystérieuses structures en pierre de la cité inca. Le trek de l'Inca Trail sur 4 jours est l'une des randonnées les plus célèbres au monde. La Porte du Soleil (Inti Punku) offre une vue panoramique spectaculaire sur la cité.\n\nPourquoi visiter :\nMachu Picchu incarne le génie de la civilisation inca et la beauté sauvage des Andes. Chaque pierre raconte une histoire vieille de plusieurs siècles. Ce site unique au monde ne ressemble à rien d'autre sur Terre et marquera votre mémoire à jamais.\n\nConseils pratiques :\nRéservez vos billets d'entrée et les permis du trek Inca Trail plusieurs mois à l'avance car les places sont très limitées. La meilleure saison est de mai à septembre. Commencez votre visite tôt le matin pour éviter les foules et profiter du lever du soleil sur les ruines.",
+    reviews: [
+      {
+        id: "r1",
+        name: "Ana Gonzalez",
+        avatar,
+        rating: 5.0,
+        text: "Machu Picchu is one of those places that takes your breath away the moment you see it. The mystical atmosphere, the ancient stones and the dramatic mountain backdrop create an unforgettable experience.",
+      },
+      {
+        id: "r2",
+        name: "François Dupont",
+        avatar,
+        rating: 4.8,
+        text: "Un site absolument fascinant. La cité inca émergeant des nuages dans les premières heures de la matinée est un spectacle à couper le souffle. Le trek Inca Trail pour y accéder est une aventure en soi.",
+      },
+      {
+        id: "r3",
+        name: "Oliver Schmidt",
+        avatar,
+        rating: 4.7,
+        text: "One of the most impressive archaeological sites I have ever visited. The precision of the Inca stonework is mind-blowing. Go early in the morning to see it in the mist — truly magical.",
+      },
+    ],
+  },
 ];
 
 export const recommended: RecommendedItem[] = [
   {
     id: "1",
+    destinationId: "5",
     name: "Mont Everest",
     description:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor",
@@ -193,6 +320,7 @@ export const recommended: RecommendedItem[] = [
   },
   {
     id: "2",
+    destinationId: "6",
     name: "Paris",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: 539,
@@ -201,6 +329,7 @@ export const recommended: RecommendedItem[] = [
   },
   {
     id: "3",
+    destinationId: "7",
     name: "Machu Picchu",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: 678,

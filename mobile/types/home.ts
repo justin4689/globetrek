@@ -26,6 +26,7 @@ export type Destination = {
 
 export type RecommendedItem = {
   id: string;
+  destinationId: string;
   name: string;
   description: string;
   price: number;

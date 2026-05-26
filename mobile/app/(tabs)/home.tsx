@@ -209,7 +209,17 @@ export default function Home() {
         {/* Recommended */}
         <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Recommended</Text>
         {recommended.map((item) => (
-          <View key={item.id} style={styles.recommendedCard}>
+          <TouchableOpacity
+            key={item.id}
+            style={styles.recommendedCard}
+            activeOpacity={0.9}
+            onPress={() =>
+              router.push({
+                pathname: "/destination/[id]" as any,
+                params: { id: item.destinationId },
+              })
+            }
+          >
             <Image
               source={item.image}
               style={styles.recommendedImage}
@@ -230,16 +240,13 @@ export default function Home() {
               </Text>
               <View style={styles.recommendedFooter}>
                 <Text style={styles.recommendedPrice}>{item.price}$</Text>
-                <TouchableOpacity
-                  style={styles.detailsButton}
-                  activeOpacity={0.8}
-                >
+                <View style={styles.detailsButton}>
                   <Text style={styles.detailsText}>details</Text>
                   <Ionicons name="eye-outline" size={13} color="white" />
-                </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
 
         <View style={{ height: 24 }} />
