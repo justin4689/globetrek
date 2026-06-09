@@ -4,12 +4,14 @@ import { StatusBar } from "react-native";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
+function RootNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const [fontsLoaded, fontError] = useFonts({
     "Roboto-Regular": require("../assets/fonts/Roboto-Regular.ttf"),
     "Roboto-Medium": require("../assets/fonts/Roboto-Medium.ttf"),
     "Roboto-Light": require("../assets/fonts/Roboto-Light.ttf"),
@@ -18,31 +20,55 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded || error) {
+    if ((fontsLoaded || fontError) && !isLoading) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [fontsLoaded, fontError, isLoading]);
 
-  if (!loaded && !error) {
-    return null;
-  }
+  if ((!fontsLoaded && !fontError) || isLoading) return null;
 
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+
+      {/* ── Routes protégées (authentifié) ───────────────────────────── */}
+      <Stack.Protected guard={isAuthenticated}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="destination/[id]" />
+        <Stack.Screen name="notifications" />
+        <Stack.Screen name="notification-detail" />
+        <Stack.Screen name="reservation-detail" />
+        <Stack.Screen name="edit-profil" />
+        <Stack.Screen name="change-password" />
+        <Stack.Screen name="help-support" />
+        <Stack.Screen
+          name="filter-sheet"
+          options={{
+            presentation: "formSheet",
+            sheetAllowedDetents: [0.705],
+            sheetCornerRadius: 24,
+          }}
+        />
+      </Stack.Protected>
+
+      {/* ── Routes publiques (non authentifié) ───────────────────────── */}
+      <Stack.Protected guard={!isAuthenticated}>
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="verify-otp" />
+      </Stack.Protected>
+
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
   return (
     <AuthProvider>
       <SafeAreaProvider>
         <StatusBar barStyle="dark-content" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="filter-sheet"
-            options={{
-              presentation: "formSheet",
-              headerShown: false,
-              sheetAllowedDetents: [0.705],
-              sheetCornerRadius: 24,
-            }}
-          />
-        </Stack>
+        <RootNavigator />
       </SafeAreaProvider>
     </AuthProvider>
   );

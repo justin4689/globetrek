@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { router } from "expo-router";
 import { authService, AuthUser } from "@/services/authService";
 import { storage } from "@/utils/storage";
 import { api } from "@/utils/api";
@@ -40,19 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const res = await authService.login(email, password);
     setUser(res.user);
-    router.replace("/(tabs)/home");
+    // Stack.Protected redirige automatiquement quand isAuthenticated devient true
   };
 
   const register = async (data: { firstName: string; lastName: string; email: string; password: string }) => {
     const res = await authService.register(data);
     setUser(res.user);
-    router.replace("/(tabs)/home");
   };
 
   const logout = async () => {
     await authService.logout();
     setUser(null);
-    router.replace("/login");
+    // Stack.Protected redirige automatiquement vers onboarding quand isAuthenticated devient false
   };
 
   const updateUser = (updated: AuthUser) => setUser(updated);
