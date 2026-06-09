@@ -43,6 +43,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authLimiter, require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/destinations', require('./routes/destinationRoutes'));
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 
