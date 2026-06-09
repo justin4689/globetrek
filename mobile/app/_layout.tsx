@@ -4,6 +4,7 @@ import { StatusBar } from "react-native";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { AuthProvider } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,21 +28,22 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="filter-sheet"
-          options={{
-            presentation: "formSheet",
-            headerShown: false,
-            sheetAllowedDetents: [0.705],
-          
-            sheetCornerRadius: 24,
-          }}
-        />
-      </Stack>
-    </SafeAreaProvider>
+    <AuthProvider>
+      <SafeAreaProvider>
+        <StatusBar barStyle="dark-content" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="filter-sheet"
+            options={{
+              presentation: "formSheet",
+              headerShown: false,
+              sheetAllowedDetents: [0.705],
+              sheetCornerRadius: 24,
+            }}
+          />
+        </Stack>
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }
