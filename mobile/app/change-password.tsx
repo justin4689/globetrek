@@ -1,6 +1,8 @@
 import { Colors, Fonts } from "@/utils/constants";
 import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -14,13 +16,29 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
+import { useChangePasswordMutation } from "@/hooks/mutations/useAuthMutations";
+import { changePasswordSchema } from "@/schemas/auth.schemas";
 
 export default function ChangePassword() {
+  const { mutate: changePassword, isPending } = useChangePasswordMutation();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = () => {
+    const parsed = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
+    if (!parsed.success) {
+      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      return;
+    }
+    changePassword({ currentPassword, newPassword }, {
+      onSuccess: () => { setSuccess(true); setTimeout(() => router.back(), 1500); },
+      onError: (err) => Alert.alert('Erreur', err?.message || 'Failed to update password.'),
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -47,7 +65,7 @@ export default function ChangePassword() {
             <Text style={styles.description}>
               Use a combination of numbers, lowercase and uppercase letters, and special
               characters to create a strong password.{"\n"}
-              Avoid personal or common words to keep your account secure. 🔒
+              Avoid personal or common words to keep your account secure.
             </Text>
           </View>
 
@@ -77,15 +95,8 @@ export default function ChangePassword() {
                   onChangeText={setNewPassword}
                   autoCapitalize="none"
                 />
-                <Pressable
-                  style={styles.eyeIcon}
-                  onPress={() => setShowNew((v) => !v)}
-                >
-                  <Ionicons
-                    name={showNew ? "eye-outline" : "eye-off-outline"}
-                    size={22}
-                    color={Colors.textColor}
-                  />
+                <Pressable style={styles.eyeIcon} onPress={() => setShowNew((v) => !v)}>
+                  <Ionicons name={showNew ? "eye-outline" : "eye-off-outline"} size={22} color={Colors.textColor} />
                 </Pressable>
               </View>
             </View>
@@ -101,27 +112,23 @@ export default function ChangePassword() {
                   onChangeText={setConfirmPassword}
                   autoCapitalize="none"
                 />
-                <Pressable
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirm((v) => !v)}
-                >
-                  <Ionicons
-                    name={showConfirm ? "eye-outline" : "eye-off-outline"}
-                    size={22}
-                    color={Colors.textColor}
-                  />
+                <Pressable style={styles.eyeIcon} onPress={() => setShowConfirm((v) => !v)}>
+                  <Ionicons name={showConfirm ? "eye-outline" : "eye-off-outline"} size={22} color={Colors.textColor} />
                 </Pressable>
               </View>
             </View>
 
+            {success && <Text style={styles.success}>Password updated successfully!</Text>}
+
             <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                { opacity: pressed ? 0.75 : 1 },
-              ]}
-              onPress={() => router.back()}
+              onPress={handleSubmit}
+              disabled={isPending}
+              style={({ pressed }) => [styles.button, { opacity: pressed ? 0.75 : 1 }]}
             >
-              <Text style={styles.buttonText}>Update password</Text>
+              <View style={styles.buttonInner}>
+                {isPending && <ActivityIndicator color={Colors.white} size="small" style={{ marginRight: 8 }} />}
+                <Text style={styles.buttonText}>Update password</Text>
+              </View>
             </Pressable>
           </View>
         </ScrollView>
@@ -200,9 +207,15 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
   },
+  buttonInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   buttonText: {
     color: Colors.white,
     fontSize: 16,
     fontFamily: Fonts.medium,
   },
+  success: { color: "#22c55e", fontSize: 13, fontFamily: Fonts.medium, textAlign: "center" },
 });

@@ -1,10 +1,14 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { StatusBar } from "react-native";
+import { ActivityIndicator, StatusBar, View } from "react-native";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { Colors } from "@/utils/constants";
+
+const queryClient = new QueryClient();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,7 +29,13 @@ function RootNavigator() {
     }
   }, [fontsLoaded, fontError, isLoading]);
 
-  if ((!fontsLoaded && !fontError) || isLoading) return null;
+  if ((!fontsLoaded && !fontError) || isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.backgroundColor }}>
+        <ActivityIndicator size="large" color={Colors.primaryColor} />
+      </View>
+    );
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -57,6 +67,7 @@ function RootNavigator() {
         <Stack.Screen name="register" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="verify-otp" />
+        <Stack.Screen name="reset-password" />
       </Stack.Protected>
 
     </Stack>
@@ -65,11 +76,13 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <StatusBar barStyle="dark-content" />
-        <RootNavigator />
-      </SafeAreaProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <StatusBar barStyle="dark-content" />
+          <RootNavigator />
+        </SafeAreaProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

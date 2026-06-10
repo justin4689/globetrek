@@ -1,12 +1,14 @@
 import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors, FontSizes, Fonts } from "../utils/constants";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Onboarding1() {
+  const { markOnboardingComplete } = useAuth();
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <Pressable
-        onPress={() => router.replace("/login")}
+        onPress={async () => { await markOnboardingComplete(); router.replace("/login"); }}
         style={{ alignItems: "flex-end" }}
       >
         <Text style={styles.textSkip}>Skip</Text>

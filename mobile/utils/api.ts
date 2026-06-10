@@ -1,12 +1,9 @@
-import { Platform } from "react-native";
 import { storage } from "./storage";
 
-// Pour Expo Go sur appareil physique, remplace par l'IP de ta machine (ex: 192.168.1.42)
-// Pour émulateur Android : 10.0.2.2 | Pour simulateur iOS : localhost
-const LOCAL_IP = "192.168.1.100";
+const LOCAL_IP = "192.168.1.14";
 
 export const BASE_URL = __DEV__
-  ? `http://${Platform.OS === "android" ? LOCAL_IP : "localhost"}:5000/api`
+  ? `http://${LOCAL_IP}:5000/api`
   : "https://api.globetrek.com/api";
 
 type RequestOptions = RequestInit & { skipAuth?: boolean };

@@ -85,7 +85,11 @@ const register = async (req, res) => {
       console.error('Failed to send verification email:', emailError.message);
     }
 
-    return sendTokens(user, res, 201);
+    return res.status(201).json({
+      success: true,
+      message: 'Account created. Please check your email for the verification code.',
+      email: user.email,
+    });
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -118,6 +122,30 @@ const login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password',
+      });
+    }
+
+    if (!user.isEmailVerified) {
+      const otp = generateOtp();
+      user.otp = await bcrypt.hash(otp, 8);
+      user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+      await user.save({ validateBeforeSave: false });
+
+      try {
+        await sendEmail(
+          user.email,
+          'GlobeTrek — Verify your account',
+          `Hello ${user.firstName},\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nThe GlobeTrek Team`
+        );
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError.message);
+      }
+
+      return res.status(403).json({
+        success: false,
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+        message: 'Please verify your email first. A new code has been sent to your inbox.',
       });
     }
 
@@ -180,7 +208,7 @@ const forgotPassword = async (req, res) => {
 
 const verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, purpose } = req.body;
 
     if (!email || !otp) {
       return res.status(400).json({
@@ -218,7 +246,12 @@ const verifyOtp = async (req, res) => {
     user.isEmailVerified = true;
     await user.save({ validateBeforeSave: false });
 
-    // Generate a short-lived reset token (for reset-password step)
+    // Registration flow: log the user in directly
+    if (purpose === 'register') {
+      return sendTokens(user, res);
+    }
+
+    // Password reset flow: return a short-lived reset token
     const resetToken = jwt.sign(
       { id: user._id, purpose: 'reset' },
       process.env.JWT_SECRET,

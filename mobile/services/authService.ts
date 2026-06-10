@@ -27,9 +27,11 @@ export const authService = {
     email: string;
     password: string;
   }) => {
-    const res = await api.post<AuthResponse>("/auth/register", data, { skipAuth: true });
-    await storage.setTokens(res.accessToken, res.refreshToken);
-    return res;
+    return api.post<{ success: boolean; message: string; email: string }>(
+      "/auth/register",
+      data,
+      { skipAuth: true }
+    );
   },
 
   login: async (email: string, password: string) => {
@@ -46,8 +48,8 @@ export const authService = {
   forgotPassword: (email: string) =>
     api.post("/auth/forgot-password", { email }, { skipAuth: true }),
 
-  verifyOtp: (email: string, otp: string) =>
-    api.post<{ success: boolean; resetToken: string }>("/auth/verify-otp", { email, otp }, { skipAuth: true }),
+  verifyOtp: (email: string, otp: string, purpose?: string) =>
+    api.post<AuthResponse & { resetToken?: string }>("/auth/verify-otp", { email, otp, purpose }, { skipAuth: true }),
 
   resetPassword: (resetToken: string, password: string) =>
     api.post("/auth/reset-password", { resetToken, password }, { skipAuth: true }),

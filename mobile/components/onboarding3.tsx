@@ -1,8 +1,10 @@
 import { router } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Colors, FontSizes, Fonts } from "../utils/constants";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Onboarding3() {
+  const { markOnboardingComplete } = useAuth();
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <View style={styles.imageContainer}>
@@ -35,14 +37,17 @@ export default function Onboarding3() {
       </View>
 
       <Pressable
-        onPress={() => router.replace("/login")}
+        onPress={async () => {
+          await markOnboardingComplete();
+          router.replace("/login");
+        }}
         android_ripple={{ color: "transparent" }}
         style={({ pressed }) => [
           styles.btnContainer,
           { opacity: pressed ? 0.6 : 1 },
         ]}
       >
-        <Text style={styles.btnText}>Next</Text>
+        <Text style={styles.btnText}>Get Started</Text>
       </Pressable>
     </View>
   );
