@@ -71,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       await authService.logout();
+      
     } catch {
       // server unreachable — still clear locally
     } finally {
