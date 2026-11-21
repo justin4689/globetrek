@@ -4,6 +4,7 @@ import { ActivityIndicator, StatusBar, View } from "react-native";
 import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { FiltersProvider } from "@/context/FiltersContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Colors } from "@/utils/constants";
@@ -44,6 +45,7 @@ function RootNavigator() {
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="destination/[id]" />
+        <Stack.Screen name="book/[id]" />
         <Stack.Screen name="notifications" />
         <Stack.Screen name="notification-detail" />
         <Stack.Screen name="reservation-detail" />
@@ -78,10 +80,12 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SafeAreaProvider>
-          <StatusBar barStyle="dark-content" />
-          <RootNavigator />
-        </SafeAreaProvider>
+        <FiltersProvider>
+          <SafeAreaProvider>
+            <StatusBar barStyle="dark-content" />
+            <RootNavigator />
+          </SafeAreaProvider>
+        </FiltersProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

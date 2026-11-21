@@ -86,14 +86,6 @@ export default function Register() {
               </View>
             </Pressable>
 
-            <Text style={styles.or}>OR</Text>
-
-            <Pressable onPress={() => {}} style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
-              <View style={styles.buttonGoogle}>
-                <Image source={require('../assets/image/google.png')} style={{ width: 24, height: 24 }} />
-                <Text style={styles.textGoogle}> Google</Text>
-              </View>
-            </Pressable>
 
             <Pressable onPress={() => router.back()}>
               <Text style={styles.signUp}>Have an account? <Text style={styles.signUpLink}>Login</Text></Text>
@@ -168,29 +160,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: Colors.white,
-    fontSize: 16,
-    fontFamily: Fonts.medium,
-  },
-  buttonGoogle: {
-    backgroundColor: Colors.white,
-    padding: 12,
-    borderRadius: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: Colors.tintColor,
-    marginTop: 24,
-  },
-  or: {
-    marginTop: 24,
-    textAlign: "center",
-    color: Colors.textColor,
-    fontFamily: Fonts.medium,
-  },
-  textGoogle: {
-    color: Colors.tintColor,
-    marginLeft: 8,
     fontSize: 16,
     fontFamily: Fonts.medium,
   },

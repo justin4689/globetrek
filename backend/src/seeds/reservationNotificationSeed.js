@@ -34,7 +34,7 @@ async function seed() {
       checkIn: new Date('2026-06-15'),
       checkOut: new Date('2026-06-22'),
       guests: 2,
-      price: 1750,
+      price: 3500, // 250 × 7 nights × 2 guests
       status: 'upcoming',
       bookingRef: 'GTK-20260001',
     },
@@ -45,7 +45,7 @@ async function seed() {
       checkIn: new Date('2026-08-10'),
       checkOut: new Date('2026-08-17'),
       guests: 2,
-      price: 5173,
+      price: 10346, // 739 × 7 nights × 2 guests
       status: 'upcoming',
       bookingRef: 'GTK-20260002',
     },
@@ -56,7 +56,7 @@ async function seed() {
       checkIn: new Date('2025-12-20'),
       checkOut: new Date('2025-12-27'),
       guests: 3,
-      price: 2450,
+      price: 7350, // 350 × 7 nights × 3 guests
       status: 'completed',
       bookingRef: 'GTK-20250003',
     },
@@ -67,7 +67,7 @@ async function seed() {
       checkIn: new Date('2025-10-05'),
       checkOut: new Date('2025-10-12'),
       guests: 2,
-      price: 1050,
+      price: 2100, // 150 × 7 nights × 2 guests
       status: 'cancelled',
       bookingRef: 'GTK-20250004',
     },

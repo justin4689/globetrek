@@ -1,3 +1,4 @@
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Images from "@/utils/images";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -18,7 +19,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Profil() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
+  const phone = user?.phone ? `${user.countryCode} ${user.phone}`.trim() : "";
   const [notifications, setNotifications] = useState(true);
   const [locationAccess, setLocationAccess] = useState(true);
   const [faceId, setFaceId] = useState(true);
@@ -55,31 +58,33 @@ export default function Profil() {
         <View style={styles.profileCard}>
           <View style={styles.avatarWrapper}>
             <Image
-              source={Images.avatar}
+              source={imageSource(user?.avatar, Images.avatar)}
               style={styles.avatar}
               resizeMode="cover"
             />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>John Doe</Text>
-            <Text style={styles.profileEmail}>johndoe@gmail.com</Text>
-            <View style={styles.profileMeta}>
-              <Ionicons
-                name="location-outline"
-                size={13}
-                color={Colors.textColor}
-              />
-              <Text style={styles.profileMetaText}>Ivory Coast</Text>
-              <View style={styles.metaSeparator} />
-              <Ionicons
-                name="call-outline"
-                size={13}
-                color={Colors.textColor}  
-              />
-              <Text style={styles.profileMetaText}>+22507865413SS</Text>
-            </View>
+            <Text style={styles.profileName} numberOfLines={1}>{fullName}</Text>
+            <Text style={styles.profileEmail} numberOfLines={1}>{user?.email}</Text>
+            {/* One line each: location and phone rarely fit side by side */}
+            {!!user?.location && (
+              <View style={styles.profileMeta}>
+                <Ionicons name="location-outline" size={13} color={Colors.textColor} />
+                <Text style={styles.profileMetaText} numberOfLines={1}>{user.location}</Text>
+              </View>
+            )}
+            {!!phone && (
+              <View style={styles.profileMeta}>
+                <Ionicons name="call-outline" size={13} color={Colors.textColor} />
+                <Text style={styles.profileMetaText} numberOfLines={1}>{phone}</Text>
+              </View>
+            )}
           </View>
-          <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.editButton}
+            activeOpacity={0.7}
+            onPress={() => router.push('/edit-profil')}
+          >
             <Ionicons name="create-outline" size={20} color={Colors.textColor} />
           </TouchableOpacity>
         </View>
@@ -293,19 +298,13 @@ const styles = StyleSheet.create({
   profileMeta: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
     gap: 4,
+    marginTop: 2,
   },
   profileMetaText: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.small,
     color: "#888",
-  },
-  metaSeparator: {
-    width: 1,
-    height: 12,
-    backgroundColor: "#E0E0E0",
-    marginHorizontal: 4,
   },
   editButton: {
     padding: 6,

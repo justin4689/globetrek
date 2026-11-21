@@ -1,9 +1,16 @@
+import { useAuth } from "@/context/AuthContext";
+import { userService } from "@/services/userService";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Images from "@/utils/images";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useMutation } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -26,13 +33,64 @@ const COUNTRY_CODES = [
   { code: "+221", flag: "🇸🇳" },
 ];
 
+const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
 export default function EditProfil() {
-  const [firstname, setFirstname] = useState("John");
-  const [lastname, setLastname]   = useState("Doe");
-  const [email, setEmail]         = useState("johndoe@gmail.com");
-  const [phone, setPhone]         = useState("07 78 54 13 55");
-  const [countryCode, setCountryCode] = useState("+225");
+  const { user, updateUser } = useAuth();
+  const [firstname, setFirstname] = useState(user?.firstName ?? "");
+  const [lastname, setLastname]   = useState(user?.lastName ?? "");
+  const [email, setEmail]         = useState(user?.email ?? "");
+  const [phone, setPhone]         = useState(user?.phone ?? "");
+  const [location, setLocation]   = useState(user?.location ?? "");
+  const [countryCode, setCountryCode] = useState(user?.countryCode || "+225");
   const [showPicker, setShowPicker]   = useState(false);
+
+  const saveProfile = useMutation({
+    mutationFn: () =>
+      userService.updateProfile({
+        firstName: firstname.trim(),
+        lastName: lastname.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        countryCode,
+        location: location.trim(),
+      }),
+    onSuccess: (res) => {
+      updateUser(res.user);
+      router.back();
+    },
+    onError: (err) =>
+      Alert.alert("Update failed", err instanceof Error ? err.message : "Please try again."),
+  });
+
+  const uploadAvatar = useMutation({
+    mutationFn: (dataUri: string) => userService.uploadAvatar(dataUri),
+    onSuccess: (res) => updateUser(res.user),
+    onError: () => Alert.alert("Upload failed", "We could not update your photo. Please try again later."),
+  });
+
+  const pickAvatar = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.6,
+      base64: true,
+    });
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset?.base64) return;
+    uploadAvatar.mutate(`data:${asset.mimeType ?? "image/jpeg"};base64,${asset.base64}`);
+  };
+
+  const handleSave = () => {
+    if (!firstname.trim() || !lastname.trim()) {
+      return Alert.alert("Missing information", "First name and last name are required.");
+    }
+    if (!EMAIL_REGEX.test(email.trim())) {
+      return Alert.alert("Invalid email", "Please enter a valid email address.");
+    }
+    saveProfile.mutate();
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -50,24 +108,34 @@ export default function EditProfil() {
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <Ionicons name="arrow-back" size={24} color={Colors.tintColor} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Edit Profil</Text>
+            <Text style={styles.headerTitle}>Edit profile</Text>
             <View style={styles.backBtn} />
           </View>
 
           {/* Avatar */}
           <View style={styles.avatarSection}>
-            <View style={styles.avatarWrapper}>
-              <Image source={Images.avatar} style={styles.avatar} resizeMode="cover" />
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              activeOpacity={0.85}
+              onPress={pickAvatar}
+              disabled={uploadAvatar.isPending}
+            >
+              <Image source={imageSource(user?.avatar, Images.avatar)} style={styles.avatar} resizeMode="cover" />
+              {uploadAvatar.isPending && (
+                <View style={styles.avatarLoading}>
+                  <ActivityIndicator color={Colors.white} />
+                </View>
+              )}
               <View style={styles.cameraOverlay}>
                 <Ionicons name="camera" size={14} color={Colors.white} />
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.field}>
-              <Text style={styles.label}>Firstname</Text>
+              <Text style={styles.label}>First name</Text>
               <TextInput
                 style={styles.input}
                 value={firstname}
@@ -77,7 +145,7 @@ export default function EditProfil() {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Lastname</Text>
+              <Text style={styles.label}>Last name</Text>
               <TextInput
                 style={styles.input}
                 value={lastname}
@@ -97,6 +165,17 @@ export default function EditProfil() {
               />
             </View>
 
+            <View style={styles.field}>
+              <Text style={styles.label}>Location</Text>
+              <TextInput
+                style={styles.input}
+                value={location}
+                onChangeText={setLocation}
+                placeholder="City, Country"
+                placeholderTextColor="#aaa"
+                autoCapitalize="words"
+              />
+            </View>
             <View style={styles.field}>
               <Text style={styles.label}>Phone number</Text>
               <View style={styles.phoneRow}>
@@ -144,10 +223,15 @@ export default function EditProfil() {
 
           {/* Update Button */}
           <Pressable
-            style={({ pressed }) => [styles.button, { opacity: pressed ? 0.75 : 1 }]}
-            onPress={() => router.back()}
+            style={({ pressed }) => [styles.button, { opacity: pressed || saveProfile.isPending ? 0.75 : 1 }]}
+            onPress={handleSave}
+            disabled={saveProfile.isPending}
           >
-            <Text style={styles.buttonText}>Update</Text>
+            {saveProfile.isPending ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.buttonText}>Update</Text>
+            )}
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -196,6 +280,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 90,
     height: 90,
+    borderRadius: 45,
+  },
+  avatarLoading: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 45,
   },
   cameraOverlay: {

@@ -241,7 +241,11 @@ export default function DestinationDetail() {
 
       {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
-        <TouchableOpacity style={styles.bookBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.bookBtn}
+          activeOpacity={0.85}
+          onPress={() => router.push({ pathname: "/book/[id]", params: { id: destination._id } })}
+        >
           <Text style={styles.bookText}>Book</Text>
         </TouchableOpacity>
         <TouchableOpacity

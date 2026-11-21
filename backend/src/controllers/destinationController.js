@@ -3,6 +3,14 @@ const serialize = require('../utils/serialize');
 
 const CATEGORIES = ['Beach', 'Mountain', 'Lake', 'Desert', 'Forest', 'City'];
 
+// "popular" = featured first, then best rated. createdAt keeps the order stable.
+const SORTS = {
+  popular: [{ isFeatured: 'desc' }, { rating: 'desc' }, { createdAt: 'asc' }],
+  price_asc: [{ price: 'asc' }, { createdAt: 'asc' }],
+  price_desc: [{ price: 'desc' }, { createdAt: 'asc' }],
+  rating: [{ rating: 'desc' }, { createdAt: 'asc' }],
+};
+
 // ─── GET /destinations ─────────────────────────────────────────────────────────
 // Query params: category, search, featured, page, limit
 
@@ -26,8 +34,22 @@ const getDestinations = async (req, res) => {
       where.OR = [{ name: { contains: term } }, { country: { contains: term } }];
     }
 
+    // Price & rating filters (ignored when not a valid number)
+    const minPrice = parseFloat(req.query.minPrice);
+    const maxPrice = parseFloat(req.query.maxPrice);
+    const minRating = parseFloat(req.query.minRating);
+    if (!Number.isNaN(minPrice) || !Number.isNaN(maxPrice)) {
+      where.price = {
+        ...(!Number.isNaN(minPrice) && { gte: minPrice }),
+        ...(!Number.isNaN(maxPrice) && { lte: maxPrice }),
+      };
+    }
+    if (!Number.isNaN(minRating)) where.rating = { gte: minRating };
+
+    const orderBy = SORTS[req.query.sort] || SORTS.popular;
+
     const [destinations, total] = await Promise.all([
-      prisma.destination.findMany({ where, skip: (page - 1) * limit, take: limit }),
+      prisma.destination.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit }),
       prisma.destination.count({ where }),
     ]);
 

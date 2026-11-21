@@ -1,12 +1,23 @@
+import { DestinationFilters, PRICE_BOUNDS } from "@/context/FiltersContext";
 import { destinationService } from "@/services/destinationService";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-export function useDestinations(params: { category?: string | null; search?: string } = {}) {
+export function useDestinations(
+  params: { category?: string | null; search?: string; filters?: DestinationFilters } = {}
+) {
   const search = params.search?.trim() || undefined;
   const category = params.category || undefined;
+  const { filters } = params;
+  const apiParams = {
+    category,
+    search,
+    sort: filters && filters.sort !== "popular" ? filters.sort : undefined,
+    minRating: filters?.minRating ?? undefined,
+    ...(filters?.price ? PRICE_BOUNDS[filters.price] : {}),
+  };
   return useQuery({
-    queryKey: ["destinations", { category, search }],
-    queryFn: async () => (await destinationService.getAll({ category, search })).destinations,
+    queryKey: ["destinations", apiParams],
+    queryFn: async () => (await destinationService.getAll(apiParams)).destinations,
     placeholderData: keepPreviousData,
   });
 }

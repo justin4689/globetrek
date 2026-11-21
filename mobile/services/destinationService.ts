@@ -28,12 +28,25 @@ export interface ApiCategory {
 }
 
 export const destinationService = {
-  getAll: (params?: { category?: string; search?: string; featured?: boolean; page?: number }) => {
+  getAll: (params?: {
+    category?: string;
+    search?: string;
+    featured?: boolean;
+    page?: number;
+    sort?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+  }) => {
     const query = new URLSearchParams();
     if (params?.category) query.set("category", params.category);
     if (params?.search) query.set("search", params.search);
     if (params?.featured) query.set("featured", "true");
     if (params?.page) query.set("page", String(params.page));
+    if (params?.sort) query.set("sort", params.sort);
+    if (params?.minPrice !== undefined) query.set("minPrice", String(params.minPrice));
+    if (params?.maxPrice !== undefined) query.set("maxPrice", String(params.maxPrice));
+    if (params?.minRating !== undefined) query.set("minRating", String(params.minRating));
     const qs = query.toString();
     return api.get<{ success: boolean; destinations: ApiDestination[]; total: number }>(`/destinations${qs ? `?${qs}` : ""}`);
   },

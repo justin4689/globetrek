@@ -80,7 +80,8 @@ export default function ReservationDetail() {
 
   const status = STATUS_CONFIG[reservation.status];
   const numNights = Math.max(1, nights(reservation.checkIn, reservation.checkOut));
-  const pricePerNight = Math.round(reservation.price / numNights);
+  // Total = nightly price × nights × guests (same formula as the API)
+  const pricePerNight = Math.round(reservation.price / (numNights * reservation.guests));
   const destinationId = reservation.destination?._id;
 
   const handleCancel = () => {
@@ -160,13 +161,13 @@ export default function ReservationDetail() {
             <InfoRow
               icon="moon-outline"
               label="Duration"
-              value={`${numNights} nights`}
+              value={`${numNights} ${numNights > 1 ? "nights" : "night"}`}
             />
             <View style={styles.cardDivider} />
             <InfoRow
               icon="people-outline"
               label="Guests"
-              value={`${reservation.guests} guests`}
+              value={`${reservation.guests} ${reservation.guests > 1 ? "guests" : "guest"}`}
             />
           </View>
 
@@ -174,7 +175,10 @@ export default function ReservationDetail() {
           <Text style={styles.sectionTitle}>Price breakdown</Text>
           <View style={styles.card}>
             <View style={styles.priceRow}>
-              <Text style={styles.priceRowLabel}>${pricePerNight} × {numNights} nights</Text>
+              <Text style={styles.priceRowLabel}>
+                ${pricePerNight} × {numNights} {numNights > 1 ? "nights" : "night"} × {reservation.guests}{" "}
+                {reservation.guests > 1 ? "guests" : "guest"}
+              </Text>
               <Text style={styles.priceRowValue}>${reservation.price.toLocaleString()}</Text>
             </View>
             <View style={styles.cardDivider} />

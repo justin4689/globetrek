@@ -1,3 +1,9 @@
+import {
+  DEFAULT_FILTERS,
+  PriceRange,
+  SortOption,
+  useFilters,
+} from "@/context/FiltersContext";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -5,37 +11,40 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const sortOptions = [
+const sortOptions: { id: SortOption; label: string; icon: string }[] = [
   { id: "popular", label: "Popular", icon: "flame-outline" },
   { id: "price_asc", label: "Price: Low to High", icon: "arrow-up-outline" },
   { id: "price_desc", label: "Price: High to Low", icon: "arrow-down-outline" },
   { id: "rating", label: "Top Rated", icon: "star-outline" },
 ];
 
-const priceRanges = [
-  { id: "budget", label: "Budget", sub: "0$ – 200$" },
-  { id: "mid", label: "Mid-range", sub: "200$ – 500$" },
-  { id: "luxury", label: "Luxury", sub: "500$+" },
+const priceRanges: { id: PriceRange; label: string; sub: string }[] = [
+  { id: "budget", label: "Budget", sub: "Up to $200" },
+  { id: "mid", label: "Mid-range", sub: "$200 – $500" },
+  { id: "luxury", label: "Luxury", sub: "$500+" },
 ];
 
 const ratings = [
-  { id: "4.0", label: "4.0+", stars: 4 },
-  { id: "4.5", label: "4.5+", stars: 4.5 },
-  { id: "5.0", label: "5.0", stars: 5 },
+  { value: 4, label: "4.0+" },
+  { value: 4.5, label: "4.5+" },
+  { value: 5, label: "5.0" },
 ];
 
 export default function FilterSheet() {
-  const [selectedSort, setSelectedSort] = useState("popular");
-  const [selectedPrice, setSelectedPrice] = useState("mid");
-  const [selectedRating, setSelectedRating] = useState("4.0");
+  const { filters, setFilters } = useFilters();
+  // Edits stay local until "Apply filters"; closing the sheet discards them
+  const [selectedSort, setSelectedSort] = useState<SortOption>(filters.sort);
+  const [selectedPrice, setSelectedPrice] = useState<PriceRange | null>(filters.price);
+  const [selectedRating, setSelectedRating] = useState<number | null>(filters.minRating);
 
   const handleReset = () => {
-    setSelectedSort("popular");
-    setSelectedPrice("mid");
-    setSelectedRating("4.0");
+    setSelectedSort(DEFAULT_FILTERS.sort);
+    setSelectedPrice(DEFAULT_FILTERS.price);
+    setSelectedRating(DEFAULT_FILTERS.minRating);
   };
 
   const handleApply = () => {
+    setFilters({ sort: selectedSort, price: selectedPrice, minRating: selectedRating });
     router.back();
   };
 
@@ -78,13 +87,14 @@ export default function FilterSheet() {
         </View>
 
         {/* Price range */}
-        <Text style={styles.sectionLabel}>Price Range</Text>
+        <Text style={styles.sectionLabel}>Price per night</Text>
         <View style={styles.optionRow}>
           {priceRanges.map((range) => (
             <TouchableOpacity
               key={range.id}
               style={[styles.priceChip, selectedPrice === range.id && styles.optionChipActive]}
-              onPress={() => setSelectedPrice(range.id)}
+              // Tap the selected range again to clear it
+              onPress={() => setSelectedPrice((prev) => (prev === range.id ? null : range.id))}
               activeOpacity={0.75}
             >
               <Text
@@ -102,22 +112,22 @@ export default function FilterSheet() {
         </View>
 
         {/* Minimum rating */}
-        <Text style={styles.sectionLabel}>Minimum Rating</Text>
+        <Text style={styles.sectionLabel}>Minimum rating</Text>
         <View style={styles.optionRow}>
           {ratings.map((r) => (
             <TouchableOpacity
-              key={r.id}
-              style={[styles.ratingChip, selectedRating === r.id && styles.optionChipActive]}
-              onPress={() => setSelectedRating(r.id)}
+              key={r.label}
+              style={[styles.ratingChip, selectedRating === r.value && styles.optionChipActive]}
+              onPress={() => setSelectedRating((prev) => (prev === r.value ? null : r.value))}
               activeOpacity={0.75}
             >
               <Ionicons
                 name="star"
                 size={14}
-                color={selectedRating === r.id ? "white" : Colors.primaryColor}
+                color={selectedRating === r.value ? "white" : Colors.primaryColor}
               />
               <Text
-                style={[styles.optionLabel, selectedRating === r.id && styles.optionLabelActive]}
+                style={[styles.optionLabel, selectedRating === r.value && styles.optionLabelActive]}
               >
                 {r.label}
               </Text>

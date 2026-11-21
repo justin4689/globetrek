@@ -1,5 +1,6 @@
 import SearchModal from "@/components/SearchModal";
 import { useAuth } from "@/context/AuthContext";
+import { useFilters } from "@/context/FiltersContext";
 import { useCategories, useDestinations, useFeaturedDestinations } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
 import { useUnreadNotificationsCount } from "@/hooks/queries/useNotificationQueries";
@@ -33,7 +34,8 @@ export default function Home() {
   const [searchVisible, setSearchVisible] = useState(false);
 
   const { data: categories = [] } = useCategories();
-  const destinationsQuery = useDestinations({ category: activeCategory });
+  const { filters, activeCount: activeFilters, resetFilters } = useFilters();
+  const destinationsQuery = useDestinations({ category: activeCategory, filters });
   const destinations = destinationsQuery.data ?? [];
   const { data: recommended = [] } = useFeaturedDestinations();
   const { data: unreadCount = 0 } = useUnreadNotificationsCount();
@@ -118,6 +120,11 @@ export default function Home() {
           activeOpacity={0.8}
         >
           <Ionicons name="options" size={24} color="white" />
+          {activeFilters > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilters}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </TouchableOpacity>
 
@@ -174,7 +181,16 @@ export default function Home() {
           </TouchableOpacity>
         ) : destinations.length === 0 ? (
           <View style={styles.stateBox}>
-            <Text style={styles.stateText}>No destinations in this category yet.</Text>
+            <Text style={styles.stateText}>
+              {activeFilters > 0
+                ? "No destinations match your filters."
+                : "No destinations in this category yet."}
+            </Text>
+            {activeFilters > 0 && (
+              <TouchableOpacity onPress={resetFilters}>
+                <Text style={styles.retryText}>Clear filters</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : null}
 
@@ -367,6 +383,23 @@ const styles = StyleSheet.create({
     height: "100%",
     paddingHorizontal: 8,
     fontFamily: Fonts.regular,
+  },
+  filterBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: Colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterBadgeText: {
+    fontFamily: Fonts.bold,
+    fontSize: 10,
+    color: Colors.primaryColor,
   },
   optionsWrapper: {
     backgroundColor: Colors.primaryColor,
