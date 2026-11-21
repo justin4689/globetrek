@@ -22,13 +22,13 @@ export default function Register() {
   const handleRegister = () => {
     const parsed = registerSchema.safeParse({ firstName, lastName, email: email.trim(), password, confirmPassword });
     if (!parsed.success) {
-      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      Alert.alert('Invalid input', parsed.error.issues[0]?.message ?? 'Invalid input');
       return;
     }
     const { confirmPassword: _confirm, ...data } = parsed.data;
     register(data, {
       onSuccess: () => router.push({ pathname: '/verify-otp', params: { email: data.email, purpose: 'register' } }),
-      onError: (err) => Alert.alert('Inscription échouée', err.message || 'Une erreur est survenue'),
+      onError: (err) => Alert.alert('Sign-up failed', err.message || 'Something went wrong. Please try again.'),
     });
   };
 
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    backgroundColor: Colors.secondaryColor,
+    backgroundColor: Colors.primaryColor,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",

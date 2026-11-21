@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
 import { reservationService } from "@/services/reservationService";
 import { imageSource } from "@/utils/api";
@@ -123,7 +124,7 @@ export default function Book() {
               <Text style={styles.summaryCountry}>{destination.country}</Text>
             </View>
             <Text style={styles.summaryPrice}>
-              ${destination.price}
+              {formatPrice(destination.price)}
               <Text style={styles.summaryUnit}> / night / guest</Text>
             </Text>
           </View>
@@ -206,15 +207,15 @@ export default function Book() {
         <View style={styles.card}>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
-              ${destination.price} × {nights} {nights > 1 ? "nights" : "night"} × {guests}{" "}
+              {formatPrice(destination.price)} × {nights} {nights > 1 ? "nights" : "night"} × {guests}{" "}
               {guests > 1 ? "guests" : "guest"}
             </Text>
-            <Text style={styles.priceValue}>${total.toLocaleString()}</Text>
+            <Text style={styles.priceValue}>{formatPrice(total)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.priceRow}>
             <Text style={[styles.priceLabel, styles.totalLabel]}>Total</Text>
-            <Text style={[styles.priceValue, styles.totalValue]}>${total.toLocaleString()}</Text>
+            <Text style={[styles.priceValue, styles.totalValue]}>{formatPrice(total)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -230,7 +231,7 @@ export default function Book() {
           {book.isPending ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.confirmText}>Confirm booking · ${total.toLocaleString()}</Text>
+            <Text style={styles.confirmText}>Confirm booking · {formatPrice(total)}</Text>
           )}
         </TouchableOpacity>
       </View>

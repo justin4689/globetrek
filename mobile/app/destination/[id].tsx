@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
 import type { ApiReview } from "@/services/destinationService";
@@ -153,7 +154,10 @@ export default function DestinationDetail() {
           {/* Name + Price */}
           <View style={styles.nameRow}>
             <Text style={styles.destName}>{destination.name}</Text>
-            <Text style={styles.price}>${destination.price}</Text>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={styles.price}>{formatPrice(destination.price)}</Text>
+              <Text style={styles.priceUnit}>per night · per guest</Text>
+            </View>
           </View>
 
           {/* Location + Stars */}
@@ -184,7 +188,7 @@ export default function DestinationDetail() {
                   activeTab === "description" && styles.tabLabelActive,
                 ]}
               >
-                description
+                Description
               </Text>
               {activeTab === "description" && <View style={styles.tabIndicator} />}
             </TouchableOpacity>
@@ -355,6 +359,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
 
     textDecorationLine: "underline",
+  },
+  priceUnit: {
+    fontFamily: Fonts.regular,
+    fontSize: 12,
+    color: "#888",
+    marginTop: 2,
   },
   price: {
     fontFamily: Fonts.bold,

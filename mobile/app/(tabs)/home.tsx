@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import SearchModal from "@/components/SearchModal";
 import { useAuth } from "@/context/AuthContext";
 import { useFilters } from "@/context/FiltersContext";
@@ -135,7 +136,7 @@ export default function Home() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Categories */}
-        <Text style={styles.sectionTitle}>categories</Text>
+        <Text style={styles.sectionTitle}>Categories</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -209,7 +210,7 @@ export default function Home() {
                   resizeMode="cover"
                 />
                 <BlurView intensity={40} tint="dark" style={styles.priceTag}>
-                  <Text style={styles.priceTagText}>{dest.price}$</Text>
+                  <Text style={styles.priceTagText}>{formatPrice(dest.price)}<Text style={styles.priceTagUnit}>/night</Text></Text>
                 </BlurView>
                 <TouchableOpacity
                   style={styles.heartButton}
@@ -283,7 +284,7 @@ export default function Home() {
                 {summarize(item.description)}
               </Text>
               <View style={styles.recommendedFooter}>
-                <Text style={styles.recommendedPrice}>{item.price}$</Text>
+                <Text style={styles.recommendedPrice}>{formatPrice(item.price)}<Text style={styles.recommendedUnit}> / night</Text></Text>
                 <View style={styles.detailsButton}>
                   <Text style={styles.detailsText}>details</Text>
                   <Ionicons name="eye-outline" size={13} color="white" />
@@ -478,6 +479,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
   },
+  priceTagUnit: {
+    fontFamily: Fonts.regular,
+    fontSize: 10,
+    color: "white",
+  },
   priceTagText: {
     color: "white",
     fontFamily: Fonts.bold,
@@ -598,6 +604,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  recommendedUnit: {
+    fontFamily: Fonts.regular,
+    fontSize: 11,
+    color: "#888",
   },
   recommendedPrice: {
     fontFamily: Fonts.bold,

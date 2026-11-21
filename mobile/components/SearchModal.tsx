@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useDestinations } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
 import { imageSource } from "@/utils/api";
@@ -150,7 +151,7 @@ export default function SearchModal({ visible, onClose }: Props) {
                       resizeMode="cover"
                     />
                     <BlurView intensity={40} tint="dark" style={styles.priceTag}>
-                      <Text style={styles.priceTagText}>{item.price}$</Text>
+                      <Text style={styles.priceTagText}>{formatPrice(item.price)}<Text style={styles.priceTagUnit}>/night</Text></Text>
                     </BlurView>
                     <TouchableOpacity
                       style={styles.heartButton}
@@ -300,6 +301,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
     overflow: "hidden",
+  },
+  priceTagUnit: {
+    fontFamily: Fonts.regular,
+    fontSize: 10,
+    color: "white",
   },
   priceTagText: {
     color: "white",

@@ -28,11 +28,11 @@ export default function Profil() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Déconnexion',
-      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      'Log out',
+      'Are you sure you want to log out?',
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Déconnecter', style: 'destructive', onPress: () => logout() },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log out', style: 'destructive', onPress: () => logout() },
       ]
     );
   };

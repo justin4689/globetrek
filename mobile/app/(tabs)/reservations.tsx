@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useReservations } from "@/hooks/queries/useReservationQueries";
 import type { ApiReservation } from "@/services/reservationService";
 import { imageSource } from "@/utils/api";
@@ -64,7 +65,7 @@ function ReservationCard({ item }: { item: ApiReservation }) {
         </View>
 
         <View style={styles.cardFooter}>
-          <Text style={styles.price}>${item.price.toLocaleString()}</Text>
+          <Text style={styles.price}>{formatPrice(item.price)}</Text>
           <View style={styles.guestsRow}>
             <Ionicons name="people-outline" size={14} color="#888" />
             <Text style={styles.guestsText}>{item.guests} guests</Text>

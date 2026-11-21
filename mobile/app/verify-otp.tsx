@@ -40,7 +40,7 @@ export default function VerifyOtp() {
   const handleVerify = () => {
     const otp = digits.join('');
     if (otp.length < 5) {
-      Alert.alert('Code incomplet', 'Please enter the 5-digit code');
+      Alert.alert('Incomplete code', 'Please enter the 5-digit code');
       return;
     }
     verifyOtp({ email, otp, purpose }, {
@@ -52,7 +52,7 @@ export default function VerifyOtp() {
           router.push({ pathname: '/reset-password', params: { token: data.resetToken } });
         }
       },
-      onError: (err) => Alert.alert('Code invalide', err?.message || 'Invalid code. Please try again.'),
+      onError: (err) => Alert.alert('Invalid code', err?.message || 'Invalid code. Please try again.'),
     });
   };
 
@@ -60,7 +60,7 @@ export default function VerifyOtp() {
     setSeconds(180);
     setDigits(['', '', '', '', '']);
     resend(email, {
-      onError: (err) => Alert.alert('Erreur', err.message || 'Could not resend code'),
+      onError: (err) => Alert.alert('Error', err.message || 'Could not resend code'),
     });
   };
 
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    backgroundColor: Colors.secondaryColor,
+    backgroundColor: Colors.primaryColor,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",

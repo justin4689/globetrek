@@ -31,12 +31,12 @@ export default function ChangePassword() {
   const handleSubmit = () => {
     const parsed = changePasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
     if (!parsed.success) {
-      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      Alert.alert('Invalid input', parsed.error.issues[0]?.message ?? 'Invalid input');
       return;
     }
     changePassword({ currentPassword, newPassword }, {
       onSuccess: () => { setSuccess(true); setTimeout(() => router.back(), 1500); },
-      onError: (err) => Alert.alert('Erreur', err?.message || 'Failed to update password.'),
+      onError: (err) => Alert.alert('Error', err?.message || 'Failed to update password.'),
     });
   };
 

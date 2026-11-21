@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import {
   useMarkNotificationAsRead,
   useNotification,
@@ -26,20 +27,12 @@ function DateCard({
   return (
     <View style={styles.dateCard}>
       <View style={styles.dateRow}>
-        <Text style={styles.dateLabel}>
-          <Text style={styles.dateLabelBold}>check in</Text>
-          {"  :  "}
-          {checkIn}
-        </Text>
+        <Text style={styles.dateLabelBold}>Check-in</Text>
         <Text style={styles.dateValue}>{checkIn}</Text>
       </View>
       <View style={styles.dateDivider} />
       <View style={styles.dateRow}>
-        <Text style={styles.dateLabel}>
-          <Text style={styles.dateLabelBold}>check out</Text>
-          {"  :  "}
-          {checkOut}
-        </Text>
+        <Text style={styles.dateLabelBold}>Check-out</Text>
         <Text style={styles.dateValue}>{checkOut}</Text>
       </View>
     </View>
@@ -133,22 +126,22 @@ export default function NotificationDetail() {
         {/* Title */}
         <Text style={styles.statusTitle}>
           {isConfirmed
-            ? "Reservation Confirmed"
+            ? "Reservation confirmed"
             : isCancelled
-            ? "Reservation Canceled"
+            ? "Reservation cancelled"
             : isPaymentFailed
-            ? "Payment Failed"
+            ? "Payment failed"
             : notif.title}
         </Text>
 
         {/* Subtitle */}
         <Text style={styles.statusSubtitle}>
           {isConfirmed && notif.destination
-            ? `your reservation at ${notif.destination.toLowerCase()} is confirmed`
+            ? `Your reservation at ${notif.destination} is confirmed`
             : isCancelled && notif.destination
-            ? `your reservation at ${notif.destination.toLowerCase()} has been canceled`
+            ? `Your reservation at ${notif.destination} has been cancelled`
             : isPaymentFailed && notif.amount
-            ? `We were unable to process your payment of $${notif.amount}`
+            ? `We were unable to process your payment of ${formatPrice(notif.amount)}`
             : notif.subtitle}
         </Text>
 
@@ -157,7 +150,7 @@ export default function NotificationDetail() {
         {/* Payment Failed: show amount */}
         {isPaymentFailed && notif.amount !== undefined && (
           <>
-            <Text style={styles.amountText}>${notif.amount}</Text>
+            <Text style={styles.amountText}>{formatPrice(notif.amount)}</Text>
             <View style={styles.divider} />
           </>
         )}
@@ -284,7 +277,7 @@ const styles = StyleSheet.create({
   statusSubtitle: {
     fontFamily: Fonts.regular,
     fontSize: FontSizes.medium,
-    color: "#5B9BD5",
+    color: "#666",
     textAlign: "center",
     lineHeight: 22,
   },

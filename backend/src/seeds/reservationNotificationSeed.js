@@ -114,14 +114,14 @@ async function seed() {
     },
     {
       type: 'payment_successful',
-      title: 'Payment Successful',
+      title: 'Payment successful',
       subtitle: 'Your payment of $350 has been completed',
       amount: 350,
       isRead: true,
     },
     {
       type: 'payment_failed',
-      title: 'Payment Failed',
+      title: 'Payment failed',
       subtitle: 'There was an issue with your payment of $430',
       amount: 430,
       reason: 'We were unable to process your payment due to an issue with your credit card.',
@@ -130,7 +130,7 @@ async function seed() {
     },
     {
       type: 'rate_booking',
-      title: 'Rate Your Booking',
+      title: 'Rate your booking',
       subtitle: 'How was your stay in Grace Bay Beach?',
       destination: 'Grace Bay Beach',
       isRead: true,

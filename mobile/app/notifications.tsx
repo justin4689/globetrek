@@ -140,7 +140,7 @@ export default function Notifications() {
         >
           <Ionicons name="arrow-back" size={24} color={Colors.tintColor} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notification</Text>
+        <Text style={styles.headerTitle}>Notifications</Text>
         <View style={{ width: 38 }} />
       </View>
 

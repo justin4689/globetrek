@@ -18,19 +18,19 @@ export default function Login() {
   const handleLogin = () => {
     const parsed = loginSchema.safeParse({ email: email.trim(), password });
     if (!parsed.success) {
-      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      Alert.alert('Invalid input', parsed.error.issues[0]?.message ?? 'Invalid input');
       return;
     }
     login(parsed.data, {
       onError: (err) => {
         if ((err as any)?.data?.code === 'EMAIL_NOT_VERIFIED') {
           Alert.alert(
-            'Email non vérifié',
-            'Un code de vérification a été envoyé à votre adresse email. Veuillez le confirmer pour continuer.',
+            'Email not verified',
+            'We sent a verification code to your email. Enter it to continue.',
             [{ text: 'OK', onPress: () => router.push({ pathname: '/verify-otp', params: { email: parsed.data.email, purpose: 'register' } }) }]
           );
         } else {
-          Alert.alert('Connexion échouée', err.message || 'Une erreur est survenue');
+          Alert.alert('Login failed', err.message || 'Something went wrong. Please try again.');
         }
       },
     });
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 24,
-    backgroundColor: Colors.secondaryColor,
+    backgroundColor: Colors.primaryColor,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",

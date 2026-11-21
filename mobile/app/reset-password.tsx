@@ -19,12 +19,12 @@ export default function ResetPassword() {
   const handleSubmit = () => {
     const parsed = resetPasswordSchema.safeParse({ password, confirmPassword });
     if (!parsed.success) {
-      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      Alert.alert('Invalid input', parsed.error.issues[0]?.message ?? 'Invalid input');
       return;
     }
     resetPassword({ token, password: parsed.data.password }, {
       onSuccess: () => router.replace('/login'),
-      onError: (err) => Alert.alert('Erreur', err?.message || 'Failed to reset password.'),
+      onError: (err) => Alert.alert('Error', err?.message || 'Failed to reset password.'),
     });
   };
 

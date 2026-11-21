@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useFavorites, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
 import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
@@ -65,7 +66,7 @@ export default function Favorites() {
 
               {/* Price tag */}
               <BlurView intensity={40} tint="dark" style={styles.priceTag}>
-                <Text style={styles.priceTagText}>{item.price}$</Text>
+                <Text style={styles.priceTagText}>{formatPrice(item.price)}<Text style={styles.priceTagUnit}>/night</Text></Text>
               </BlurView>
 
               {/* Heart button — always filled, tap to remove */}
@@ -190,6 +191,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 8,
     overflow: "hidden",
+  },
+  priceTagUnit: {
+    fontFamily: Fonts.regular,
+    fontSize: 10,
+    color: "white",
   },
   priceTagText: {
     color: "white",

@@ -15,12 +15,12 @@ export default function ForgotPassword() {
   const handleSubmit = () => {
     const parsed = forgotPasswordSchema.safeParse({ email: email.trim() });
     if (!parsed.success) {
-      Alert.alert('Erreur de saisie', parsed.error.issues[0]?.message ?? 'Invalid input');
+      Alert.alert('Invalid input', parsed.error.issues[0]?.message ?? 'Invalid input');
       return;
     }
     forgotPassword(parsed.data.email, {
       onSuccess: () => router.push({ pathname: '/verify-otp', params: { email: parsed.data.email } }),
-      onError: (err) => Alert.alert('Erreur', err.message || 'Une erreur est survenue'),
+      onError: (err) => Alert.alert('Error', err.message || 'Something went wrong. Please try again.'),
     });
   };
 
@@ -35,7 +35,7 @@ export default function ForgotPassword() {
 
           <View style={styles.textContainer}>
             <Text style={styles.title}>Forgot Password</Text>
-            <Text style={styles.subtitle}>Enter your email and we'll send you a link to reset your password</Text>
+            <Text style={styles.subtitle}>Enter your email and we'll send you a 5-digit code to reset your password</Text>
           </View>
 
           <View style={styles.formContainer}>
@@ -57,7 +57,7 @@ export default function ForgotPassword() {
             >
               <View style={styles.buttonInner}>
                 {isPending && <ActivityIndicator color={Colors.white} size="small" style={{ marginRight: 8 }} />}
-                <Text style={styles.buttonText}>Send Reset Link</Text>
+                <Text style={styles.buttonText}>Send code</Text>
               </View>
             </Pressable>
 
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
   },
   button: {
-    backgroundColor: Colors.secondaryColor,
+    backgroundColor: Colors.primaryColor,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",

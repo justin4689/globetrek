@@ -1,3 +1,4 @@
+import { formatPrice } from "@/utils/format";
 import { useCancelReservation, useReservation } from "@/hooks/queries/useReservationQueries";
 import type { ApiReservation } from "@/services/reservationService";
 import { imageSource } from "@/utils/api";
@@ -176,10 +177,10 @@ export default function ReservationDetail() {
           <View style={styles.card}>
             <View style={styles.priceRow}>
               <Text style={styles.priceRowLabel}>
-                ${pricePerNight} × {numNights} {numNights > 1 ? "nights" : "night"} × {reservation.guests}{" "}
+                {formatPrice(pricePerNight)} × {numNights} {numNights > 1 ? "nights" : "night"} × {reservation.guests}{" "}
                 {reservation.guests > 1 ? "guests" : "guest"}
               </Text>
-              <Text style={styles.priceRowValue}>${reservation.price.toLocaleString()}</Text>
+              <Text style={styles.priceRowValue}>{formatPrice(reservation.price)}</Text>
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.priceRow}>
@@ -190,7 +191,7 @@ export default function ReservationDetail() {
             <View style={styles.priceRow}>
               <Text style={[styles.priceRowLabel, styles.totalLabel]}>Total</Text>
               <Text style={[styles.priceRowValue, styles.totalValue]}>
-                ${reservation.price.toLocaleString()}
+                {formatPrice(reservation.price)}
               </Text>
             </View>
           </View>
