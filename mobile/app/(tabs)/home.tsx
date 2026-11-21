@@ -59,7 +59,7 @@ export default function Home() {
       />
 
       {/* The whole page scrolls, header included, so cards are never hidden under it */}
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -316,8 +316,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundColor,
-    paddingHorizontal: 16,
     paddingTop: 20,
+  },
+  // Side padding lives inside the scroll view so badges and shadows near the edges are not clipped
+  scrollContent: {
+    paddingHorizontal: 16,
   },
   header: {
     flexDirection: "row",
@@ -355,17 +358,22 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  // Padding keeps the badge inside the bell's box: the scroll view clips anything that overflows
   bellWrapper: {
     position: "relative",
+    padding: 4,
   },
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
+    top: 0,
+    right: 0,
     backgroundColor: Colors.primaryColor,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: Colors.white,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -56,6 +56,13 @@ export default function SearchModal({ visible, onClose }: Props) {
 
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
+  // The input is uncontrolled: to change its text from code, remount it with a new default value
+  const [inputSeed, setInputSeed] = useState({ key: 0, text: "" });
+  const setSearchText = (text: string) => {
+    setInputSeed((seed) => ({ key: seed.key + 1, text }));
+    setQuery(text);
+  };
+
   useEffect(() => {
     if (!visible) return;
     AsyncStorage.getItem(RECENT_KEY)
@@ -90,7 +97,7 @@ export default function SearchModal({ visible, onClose }: Props) {
     if (visible) {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      setQuery("");
+      setSearchText("");
     }
   }, [visible]);
 
@@ -115,17 +122,24 @@ export default function SearchModal({ visible, onClose }: Props) {
             <View style={styles.inputWrapper}>
               <Ionicons name="search" size={18} color="#999" />
               <TextInput
+                key={inputSeed.key}
                 ref={inputRef}
+                autoFocus={inputSeed.key > 0}
                 style={styles.input}
                 placeholder="Where do you want to go?"
                 placeholderTextColor="#aaa"
-                value={query}
+                // Uncontrolled on purpose: writing `value` back on every keystroke fights the
+                // Android keyboard's composition (duplicated letters, input freezing)
+                defaultValue={inputSeed.text}
                 onChangeText={setQuery}
+                autoCorrect={false}
+                autoComplete="off"
+                spellCheck={false}
                 returnKeyType="search"
                 onSubmitEditing={() => saveRecent(query)}
               />
               {query.length > 0 && (
-                <TouchableOpacity onPress={() => setQuery("")}>
+                <TouchableOpacity onPress={() => setSearchText("")}>
                   <Ionicons name="close-circle" size={18} color="#999" />
                 </TouchableOpacity>
               )}
@@ -149,7 +163,7 @@ export default function SearchModal({ visible, onClose }: Props) {
                 <TouchableOpacity
                   key={item}
                   style={styles.recentItem}
-                  onPress={() => setQuery(item)}
+                  onPress={() => setSearchText(item)}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="time-outline" size={18} color="#aaa" />

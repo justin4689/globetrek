@@ -37,10 +37,10 @@ export default function FilterSheet() {
   const [selectedPrice, setSelectedPrice] = useState<PriceRange | null>(filters.price);
   const [selectedRating, setSelectedRating] = useState<number | null>(filters.minRating);
 
+  // Reset clears the filters on the home screen right away (no extra "Apply" needed)
   const handleReset = () => {
-    setSelectedSort(DEFAULT_FILTERS.sort);
-    setSelectedPrice(DEFAULT_FILTERS.price);
-    setSelectedRating(DEFAULT_FILTERS.minRating);
+    setFilters(DEFAULT_FILTERS);
+    router.back();
   };
 
   const handleApply = () => {
