@@ -1,12 +1,14 @@
 import {
-  notifications as allNotifications,
-  NotificationItem,
-  NotificationType,
-} from "@/data/notifications";
+  useMarkAllNotificationsAsRead,
+  useNotifications,
+} from "@/hooks/queries/useNotificationQueries";
+import type { ApiNotification, NotificationType } from "@/services/notificationService";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import {
+  ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,17 +17,35 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function groupByDay(
-  items: NotificationItem[]
-): { day: string; items: NotificationItem[] }[] {
-  const map: Record<string, NotificationItem[]> = {};
+function dayLabel(date: Date) {
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(date)) / 86_400_000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function timeAgo(date: Date) {
+  const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} d ago`;
+}
+
+// Notifications come sorted newest first from the API, so day groups keep that order
+function groupByDay(items: ApiNotification[]): { day: string; items: ApiNotification[] }[] {
+  const map: Record<string, ApiNotification[]> = {};
   const order: string[] = [];
   for (const item of items) {
-    if (!map[item.day]) {
-      map[item.day] = [];
-      order.push(item.day);
+    const day = dayLabel(new Date(item.createdAt));
+    if (!map[day]) {
+      map[day] = [];
+      order.push(day);
     }
-    map[item.day].push(item);
+    map[day].push(item);
   }
   return order.map((day) => ({ day, items: map[day] }));
 }
@@ -101,8 +121,13 @@ function EmptyState() {
 }
 
 export default function Notifications() {
-  const groups = groupByDay(allNotifications);
-  const isEmpty = allNotifications.length === 0;
+  const { data, isPending, isError, refetch, isRefetching } = useNotifications();
+  const markAllAsRead = useMarkAllNotificationsAsRead();
+
+  const notifications = data?.notifications ?? [];
+  const unreadCount = data?.unreadCount ?? 0;
+  const groups = groupByDay(notifications);
+  const isEmpty = notifications.length === 0;
 
   return (
     <SafeAreaView style={styles.root} edges={["top", "left", "right"]}>
@@ -119,26 +144,36 @@ export default function Notifications() {
         <View style={{ width: 38 }} />
       </View>
 
-      {isEmpty ? (
+      {isPending ? (
+        <View style={styles.stateBox}>
+          <ActivityIndicator color={Colors.primaryColor} />
+        </View>
+      ) : isError ? (
+        <TouchableOpacity style={styles.stateBox} onPress={() => refetch()}>
+          <Text style={styles.stateText}>Could not load notifications.</Text>
+          <Text style={styles.retryText}>Tap to retry</Text>
+        </TouchableOpacity>
+      ) : isEmpty ? (
         <EmptyState />
       ) : (
         <>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
+            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => { refetch(); }} />}
           >
             {groups.map(({ day, items }, gi) => (
               <View key={day} style={gi > 0 ? styles.groupGap : undefined}>
                 <Text style={styles.dayLabel}>{day}</Text>
                 {items.map((notif, idx) => (
                   <TouchableOpacity
-                    key={notif.id}
-                    style={[styles.notifRow, idx === 0 && gi === 0 && styles.notifRowHighlighted]}
+                    key={notif._id}
+                    style={[styles.notifRow, !notif.isRead && styles.notifRowHighlighted]}
                     activeOpacity={0.75}
                     onPress={() =>
                       router.push({
                         pathname: "/notification-detail",
-                        params: { id: notif.id },
+                        params: { id: notif._id },
                       })
                     }
                   >
@@ -148,7 +183,7 @@ export default function Notifications() {
                       <Text style={styles.notifSubtitle} numberOfLines={1}>
                         {notif.subtitle}
                       </Text>
-                      <Text style={styles.notifTime}>{notif.time}</Text>
+                      <Text style={styles.notifTime}>{timeAgo(new Date(notif.createdAt))}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -157,11 +192,22 @@ export default function Notifications() {
             <View style={{ height: 100 }} />
           </ScrollView>
 
-          <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.prevBtn} activeOpacity={0.85}>
-              <Text style={styles.prevBtnText}>See previous notifications</Text>
-            </TouchableOpacity>
-          </View>
+          {unreadCount > 0 && (
+            <View style={styles.bottomBar}>
+              <TouchableOpacity
+                style={styles.prevBtn}
+                activeOpacity={0.85}
+                onPress={() => markAllAsRead.mutate()}
+                disabled={markAllAsRead.isPending}
+              >
+                {markAllAsRead.isPending ? (
+                  <ActivityIndicator color={Colors.primaryColor} />
+                ) : (
+                  <Text style={styles.prevBtnText}>Mark all as read ({unreadCount})</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </>
       )}
     </SafeAreaView>
@@ -172,6 +218,22 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  stateBox: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  stateText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#888",
+  },
+  retryText: {
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    color: Colors.primaryColor,
   },
 
   /* Header */

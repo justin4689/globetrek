@@ -1,4 +1,3 @@
-import { notificationService } from "@/services/notificationService";
 import { reservationService } from "@/services/reservationService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -25,13 +24,5 @@ export function useCancelReservation() {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       queryClient.invalidateQueries({ queryKey: ["reservation", id] });
     },
-  });
-}
-
-export function useUnreadNotificationsCount() {
-  return useQuery({
-    queryKey: ["notifications"],
-    queryFn: () => notificationService.getAll(),
-    select: (res) => res.unreadCount,
   });
 }

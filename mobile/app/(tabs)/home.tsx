@@ -2,7 +2,7 @@ import SearchModal from "@/components/SearchModal";
 import { useAuth } from "@/context/AuthContext";
 import { useCategories, useDestinations, useFeaturedDestinations } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
-import { useUnreadNotificationsCount } from "@/hooks/queries/useReservationQueries";
+import { useUnreadNotificationsCount } from "@/hooks/queries/useNotificationQueries";
 import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import { summarize } from "@/utils/text";

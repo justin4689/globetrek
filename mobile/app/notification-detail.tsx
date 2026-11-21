@@ -1,8 +1,13 @@
-import { notifications } from "@/data/notifications";
+import {
+  useMarkNotificationAsRead,
+  useNotification,
+} from "@/hooks/queries/useNotificationQueries";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -44,15 +49,45 @@ function DateCard({
 export default function NotificationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const notif = notifications.find((n) => n.id === id);
+  const { data: notif, isPending, isError, refetch } = useNotification(id);
+  const markAsRead = useMarkNotificationAsRead();
+  const { mutate: markRead } = markAsRead;
 
-  if (!notif) return null;
+  // Opening an unread notification marks it as read (also updates the home badge)
+  useEffect(() => {
+    if (notif && !notif.isRead) markRead(notif._id);
+  }, [notif, markRead]);
+
+  if (!notif) {
+    return (
+      <View style={[styles.root, styles.stateScreen]}>
+        {isPending ? (
+          <ActivityIndicator color={Colors.primaryColor} />
+        ) : (
+          <>
+            <Text style={styles.stateText}>
+              {isError ? "Could not load this notification." : "This notification no longer exists."}
+            </Text>
+            {isError && (
+              <TouchableOpacity onPress={() => refetch()}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.retryText}>Go back</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    );
+  }
 
   const isConfirmed = notif.type === "reservation_confirmed";
   const isCancelled = notif.type === "reservation_cancelled";
   const isPaymentFailed = notif.type === "payment_failed";
+  const isRating = notif.type === "rate_booking";
 
-  const isSuccess = isConfirmed;
+  const isSuccess = isConfirmed || notif.type === "payment_successful";
   const showContactSupport = isCancelled || isPaymentFailed;
 
   return (
@@ -82,11 +117,13 @@ export default function NotificationDetail() {
           <View
             style={[
               styles.bigCircle,
-              { backgroundColor: isSuccess ? "#4CAF50" : "#FDDEDE" },
+              { backgroundColor: isSuccess ? "#4CAF50" : isRating ? "#FFF9C4" : "#FDDEDE" },
             ]}
           >
             {isSuccess ? (
               <Ionicons name="checkmark" size={52} color="white" />
+            ) : isRating ? (
+              <Ionicons name="star-outline" size={44} color="#F9A825" />
             ) : (
               <Ionicons name="warning-outline" size={44} color="#E74C3C" />
             )}
@@ -179,6 +216,21 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.white,
+  },
+  stateScreen: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  stateText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#888",
+  },
+  retryText: {
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    color: Colors.primaryColor,
   },
 
   /* Header */
