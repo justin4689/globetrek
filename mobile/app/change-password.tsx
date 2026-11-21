@@ -1,4 +1,4 @@
-import { Colors, Fonts } from "@/utils/constants";
+import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -24,6 +24,7 @@ export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -50,9 +51,13 @@ export default function ChangePassword() {
           contentContainerStyle={{ alignItems: "center", flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={Colors.tintColor} />
-          </Pressable>
+          <View style={styles.header}>
+            <Pressable style={styles.headerBtn} onPress={() => router.back()} hitSlop={8}>
+              <Ionicons name="arrow-back" size={24} color={Colors.tintColor} />
+            </Pressable>
+            <Text style={styles.headerTitle}>Change password</Text>
+            <View style={styles.headerBtn} />
+          </View>
 
           <View>
             <Image
@@ -71,25 +76,28 @@ export default function ChangePassword() {
 
           <View style={styles.formContainer}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Current Password</Text>
+              <Text style={styles.label}>Current password</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
-                  style={styles.input}
-                  placeholder="••••••••••"
-                  secureTextEntry
+                  style={[styles.input, styles.inputWithIcon]}
+                  placeholder="Enter your current password"
+                  secureTextEntry={!showCurrent}
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
                   autoCapitalize="none"
                 />
+                <Pressable style={styles.eyeIcon} onPress={() => setShowCurrent((v) => !v)}>
+                  <Ionicons name={showCurrent ? "eye-outline" : "eye-off-outline"} size={22} color={Colors.textColor} />
+                </Pressable>
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>New Password</Text>
+              <Text style={styles.label}>New password</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={[styles.input, styles.inputWithIcon]}
-                  placeholder="••••••••••"
+                  placeholder="At least 6 characters"
                   secureTextEntry={!showNew}
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -102,11 +110,11 @@ export default function ChangePassword() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
+              <Text style={styles.label}>Confirm new password</Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   style={[styles.input, styles.inputWithIcon]}
-                  placeholder="••••••••••"
+                  placeholder="Repeat your new password"
                   secureTextEntry={!showConfirm}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -143,11 +151,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundColor,
     paddingHorizontal: 16,
   },
-  backButton: {
-    alignSelf: "flex-start",
+  header: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 4,
-    marginBottom: 4,
-    padding: 4,
+  },
+  headerBtn: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.medium,
+    color: Colors.tintColor,
   },
   logo: {
     width: 160,

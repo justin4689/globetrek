@@ -369,8 +369,11 @@ const styles = StyleSheet.create({
   },
 
   /* Logout */
+  // Destructive action: outlined red, not the primary orange CTA
   logoutButton: {
-    backgroundColor: Colors.primaryColor,
+    backgroundColor: Colors.white,
+    borderWidth: 1.5,
+    borderColor: "#E74C3C",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -379,7 +382,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.regular,
-    color: "#fff",
+    color: "#E74C3C",
     letterSpacing: 0.5,
   },
 

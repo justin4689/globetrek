@@ -53,6 +53,13 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <SearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+      />
+
+      {/* The whole page scrolls, header included, so cards are never hidden under it */}
+      <ScrollView showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -67,10 +74,7 @@ export default function Home() {
             <Text style={styles.headerText}>
               Hi{" "}
               <Text
-                style={{
-                  textDecorationLine: "underline",
-                  fontFamily: Fonts.bold,
-                }}
+                style={{ fontFamily: Fonts.bold }}
               >
                 {fullName}
               </Text>{" "}
@@ -129,12 +133,6 @@ export default function Home() {
         </TouchableOpacity>
       </TouchableOpacity>
 
-      <SearchModal
-        visible={searchVisible}
-        onClose={() => setSearchVisible(false)}
-      />
-
-      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Categories */}
         <Text style={styles.sectionTitle}>Categories</Text>
         <ScrollView
@@ -142,6 +140,20 @@ export default function Home() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoriesContent}
         >
+          <TouchableOpacity
+            style={[styles.categoryChip, activeCategory === null && styles.categoryChipActive]}
+            onPress={() => setActiveCategory(null)}
+            activeOpacity={0.75}
+          >
+            <MaterialCommunityIcons
+              name="view-grid-outline"
+              size={18}
+              color={activeCategory === null ? "white" : Colors.textColor}
+            />
+            <Text style={[styles.categoryText, activeCategory === null && styles.categoryTextActive]}>
+              All
+            </Text>
+          </TouchableOpacity>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}

@@ -27,12 +27,14 @@ const HERO_HEIGHT = height * 0.48;
 const REVIEW_CARD_WIDTH = width - 64;
 
 function Stars({ rating }: { rating: number }) {
+  // Round to the nearest half star: 4.8 → 4.5 stars, not 5 full ones
+  const halves = Math.floor(rating * 2);
   return (
     <View style={{ flexDirection: "row", gap: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Ionicons
           key={i}
-          name={i <= Math.round(rating) ? "star" : "star-outline"}
+          name={halves >= i * 2 ? "star" : halves === i * 2 - 1 ? "star-half" : "star-outline"}
           size={14}
           color={Colors.primaryColor}
         />
@@ -41,15 +43,25 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join("");
+
 function ReviewCard({ review }: { review: ApiReview }) {
   return (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Image
-          source={imageSource(review.avatar, require("../../assets/image/avatar.jpg"))}
-          style={styles.reviewAvatar}
-          resizeMode="cover"
-        />
+        {review.avatar ? (
+          <Image source={imageSource(review.avatar)} style={styles.reviewAvatar} resizeMode="cover" />
+        ) : (
+          <View style={[styles.reviewAvatar, styles.reviewInitials]}>
+            <Text style={styles.reviewInitialsText}>{initials(review.name)}</Text>
+          </View>
+        )}
         <View style={styles.reviewMeta}>
           <Text style={styles.reviewName}>{review.name}</Text>
           <View style={styles.reviewRatingRow}>
@@ -57,9 +69,6 @@ function ReviewCard({ review }: { review: ApiReview }) {
             <Text style={styles.reviewRatingText}>{review.rating}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.reviewDots}>
-          <Ionicons name="ellipsis-vertical" size={18} color="#aaa" />
-        </TouchableOpacity>
       </View>
       <Text style={styles.reviewText}>{review.text}</Text>
     </View>
@@ -74,6 +83,7 @@ export default function DestinationDetail() {
   const toggleFavorite = useToggleFavorite();
   const [activeTab, setActiveTab] = useState<"description" | "reviews">("description");
   const [activeReview, setActiveReview] = useState(0);
+  const [activeImage, setActiveImage] = useState(0);
   const reviewsRef = useRef<FlatList>(null);
 
   if (isPending || isError || !destination) {
@@ -113,7 +123,7 @@ export default function DestinationDetail() {
         {/* Hero */}
         <View style={styles.heroContainer}>
           <Image
-            source={imageSource(images[0])}
+            source={imageSource(images[activeImage] ?? images[0])}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -130,12 +140,22 @@ export default function DestinationDetail() {
           {/* Thumbnails */}
           <View style={styles.thumbsRow}>
             {shownThumbs.map((img, i) => (
-              <TouchableOpacity key={i} style={styles.thumbWrapper} activeOpacity={0.85}>
+              <TouchableOpacity
+                key={i}
+                style={[styles.thumbWrapper, activeImage === i && styles.thumbActive]}
+                activeOpacity={0.85}
+                onPress={() => setActiveImage(i)}
+              >
                 <Image source={imageSource(img)} style={styles.thumb} resizeMode="cover" />
               </TouchableOpacity>
             ))}
             {extraCount > 0 && (
-              <TouchableOpacity style={styles.thumbWrapper} activeOpacity={0.85}>
+              // Each tap shows the next of the remaining photos
+              <TouchableOpacity
+                style={[styles.thumbWrapper, activeImage >= 3 && styles.thumbActive]}
+                activeOpacity={0.85}
+                onPress={() => setActiveImage((i) => (i >= 3 && i < images.length - 1 ? i + 1 : 3))}
+              >
                 <Image
                   source={imageSource(images[3])}
                   style={styles.thumb}
@@ -322,6 +342,10 @@ const styles = StyleSheet.create({
 
   
   },
+  thumbActive: {
+    borderWidth: 2,
+    borderColor: Colors.white,
+  },
   thumb: {
     width: "100%",
     height: "100%",
@@ -459,6 +483,16 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
   },
+  reviewInitials: {
+    backgroundColor: "#FFF3EC",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  reviewInitialsText: {
+    fontFamily: Fonts.bold,
+    fontSize: 15,
+    color: Colors.primaryColor,
+  },
   reviewMeta: {
     flex: 1,
     gap: 4,
@@ -477,9 +511,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.medium,
     fontSize: FontSizes.small,
     color: "#888",
-  },
-  reviewDots: {
-    padding: 4,
   },
   reviewText: {
     fontFamily: Fonts.regular,

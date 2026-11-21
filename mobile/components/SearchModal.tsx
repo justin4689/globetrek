@@ -5,6 +5,7 @@ import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { ComponentRef, useEffect, useRef, useState } from "react";
 import {
@@ -26,7 +27,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
-const recentSearches = ["Maldives", "Bali", "Santorini", "Dubai"];
+const RECENT_KEY = "recentSearches";
+const MAX_RECENT = 5;
 
 type Props = {
   visible: boolean;
@@ -52,7 +54,34 @@ export default function SearchModal({ visible, onClose }: Props) {
   const favoriteIds = useFavoriteIds();
   const toggleFavorite = useToggleFavorite();
 
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!visible) return;
+    AsyncStorage.getItem(RECENT_KEY)
+      .then((raw) => setRecentSearches(raw ? JSON.parse(raw) : []))
+      .catch(() => setRecentSearches([]));
+  }, [visible]);
+
+  // Most recent first, no duplicates (case-insensitive), capped at MAX_RECENT
+  const saveRecent = (term: string) => {
+    const value = term.trim();
+    if (!value) return;
+    const next = [value, ...recentSearches.filter((s) => s.toLowerCase() !== value.toLowerCase())].slice(
+      0,
+      MAX_RECENT
+    );
+    setRecentSearches(next);
+    AsyncStorage.setItem(RECENT_KEY, JSON.stringify(next)).catch(() => {});
+  };
+
+  const clearRecent = () => {
+    setRecentSearches([]);
+    AsyncStorage.removeItem(RECENT_KEY).catch(() => {});
+  };
+
   const openDestination = (id: string) => {
+    saveRecent(query);
     onClose();
     router.push({ pathname: "/destination/[id]" as any, params: { id } });
   };
@@ -70,6 +99,7 @@ export default function SearchModal({ visible, onClose }: Props) {
       visible={visible}
       animationType="slide"
       presentationStyle="fullScreen"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -92,6 +122,7 @@ export default function SearchModal({ visible, onClose }: Props) {
                 value={query}
                 onChangeText={setQuery}
                 returnKeyType="search"
+                onSubmitEditing={() => saveRecent(query)}
               />
               {query.length > 0 && (
                 <TouchableOpacity onPress={() => setQuery("")}>
@@ -104,7 +135,16 @@ export default function SearchModal({ visible, onClose }: Props) {
           {query.length === 0 ? (
             /* Recent searches */
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Recent searches</Text>
+              {recentSearches.length === 0 ? (
+                <Text style={styles.hintText}>Search a destination or a country.</Text>
+              ) : (
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>Recent searches</Text>
+                  <TouchableOpacity onPress={clearRecent} hitSlop={8}>
+                    <Text style={styles.clearText}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               {recentSearches.map((item) => (
                 <TouchableOpacity
                   key={item}
@@ -235,11 +275,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+  },
   sectionTitle: {
     fontFamily: Fonts.bold,
     fontSize: FontSizes.medium,
     color: Colors.textColor,
     marginBottom: 12,
+  },
+  clearText: {
+    fontFamily: Fonts.medium,
+    fontSize: 14,
+    color: Colors.primaryColor,
+  },
+  hintText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#999",
   },
   recentItem: {
     flexDirection: "row",
