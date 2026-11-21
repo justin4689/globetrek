@@ -250,9 +250,9 @@ export default function DestinationDetail() {
           onPress={() => toggleFavorite.mutate({ destinationId: destination._id, isFavorite })}
         >
           <Ionicons
-            name={isFavorite ? "bookmark" : "bookmark-outline"}
+            name={isFavorite ? "heart" : "heart-outline"}
             size={24}
-            color={isFavorite ? Colors.primaryColor : Colors.textColor}
+            color={Colors.primaryColor}
           />
         </TouchableOpacity>
       </View>
