@@ -32,10 +32,16 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const response = await fetch(`${BASE_URL}${endpoint}`, { headers, ...rest });
   const data = await response.json();
 
-  // Token expiré → on tente un refresh puis on rejoue la requête une fois
+  // Access token expired → refresh once and replay the request; if that fails the session is over
   if (!response.ok && data?.code === "TOKEN_EXPIRED") {
     const refreshed = await tryRefresh();
     if (refreshed) return request<T>(endpoint, options);
+    await expireSession();
+  }
+
+  // Session closed on the server (logout elsewhere, password reset, revoked)
+  if (!response.ok && data?.code === "SESSION_EXPIRED") {
+    await expireSession();
   }
 
   if (!response.ok) {
@@ -43,6 +49,21 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   return data as T;
+}
+
+// Lets the auth layer sign the user out when the server ends the session
+let sessionExpiredHandler: (() => void) | null = null;
+
+export function onSessionExpired(handler: () => void) {
+  sessionExpiredHandler = handler;
+  return () => {
+    if (sessionExpiredHandler === handler) sessionExpiredHandler = null;
+  };
+}
+
+async function expireSession() {
+  await storage.clearTokens();
+  sessionExpiredHandler?.();
 }
 
 async function tryRefresh(): Promise<boolean> {

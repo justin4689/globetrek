@@ -2,6 +2,34 @@ const { prisma } = require('../config/db');
 const serialize = require('../utils/serialize');
 
 const STATUSES = ['upcoming', 'completed', 'cancelled'];
+
+// Dates are stored at UTC midnight (date-only bookings): format them in UTC to keep the booked day
+const dayLabel = (date) => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
+
+// Best-effort: a failed notification must never fail the booking itself
+const notify = (reservation, type) =>
+  prisma.notification
+    .create({
+      data: {
+        userId: reservation.userId,
+        reservationId: reservation.id,
+        type,
+        destination: reservation.destinationName,
+        checkIn: dayLabel(reservation.checkIn),
+        checkOut: dayLabel(reservation.checkOut),
+        ...(type === 'reservation_confirmed'
+          ? {
+              title: 'Reservation confirmed',
+              subtitle: `Your reservation at ${reservation.destinationName} is confirmed`,
+            }
+          : {
+              title: 'Reservation cancelled',
+              subtitle: `Your reservation at ${reservation.destinationName} has been cancelled`,
+              reason: 'You cancelled this reservation.',
+            }),
+      },
+    })
+    .catch((err) => console.error('Notification error:', err.message));
 const destinationSummary = { select: { id: true, name: true, country: true, images: true } };
 
 // GTK-<year><4-digit sequence>, unique per year. Retries on the (rare) collision.
@@ -121,6 +149,8 @@ const createReservation = async (req, res) => {
       }
     }
 
+    await notify(reservation, 'reservation_confirmed');
+
     res.status(201).json({ success: true, reservation: serialize(reservation) });
   } catch (error) {
     console.error('createReservation error:', error);
@@ -148,6 +178,8 @@ const cancelReservation = async (req, res) => {
       where: { id: reservation.id },
       data: { status: 'cancelled' },
     });
+
+    await notify(updated, 'reservation_cancelled');
 
     res.status(200).json({ success: true, reservation: serialize(updated) });
   } catch (error) {

@@ -58,6 +58,7 @@ export default function Book() {
       }),
     onSuccess: ({ reservation }) => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }); // a confirmation notification was created
       router.replace({ pathname: "/reservation-detail", params: { id: reservation._id } });
     },
     onError: (err) =>

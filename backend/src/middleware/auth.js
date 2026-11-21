@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { prisma } = require('../config/db');
+const { isSessionActive } = require('../services/session.service');
 
 const protect = async (req, res, next) => {
   try {
@@ -31,6 +32,15 @@ const protect = async (req, res, next) => {
       });
     }
 
+    // Signed-out or revoked sessions (logout, password reset) can no longer use their access token
+    if (!decoded.sid || !(await isSessionActive(decoded.sid))) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session expired. Please log in again.',
+        code: 'SESSION_EXPIRED',
+      });
+    }
+
     const user = await prisma.user.findUnique({ where: { id: decoded.id } });
     if (!user) {
       return res.status(401).json({
@@ -40,6 +50,7 @@ const protect = async (req, res, next) => {
     }
 
     req.user = user;
+    req.sessionId = decoded.sid;
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

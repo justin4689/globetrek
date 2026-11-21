@@ -4,7 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 // Re-enable them per query with `omit: { password: false }`.
 const prisma = new PrismaClient({
   omit: {
-    user: { password: true, otp: true, otpExpiry: true, refreshToken: true },
+    user: { password: true, otp: true, otpExpiry: true },
   },
 });
 

@@ -176,12 +176,23 @@ export default function NotificationDetail() {
           notif.checkOut && (
             <>
               {isConfirmed && (
-                <Text style={styles.sectionTitle}>Reservation Details</Text>
+                <Text style={styles.sectionTitle}>Reservation details</Text>
               )}
               {isCancelled && <View style={{ height: 20 }} />}
               <DateCard checkIn={notif.checkIn} checkOut={notif.checkOut} />
             </>
           )}
+
+        {!!notif.reservationId && (
+          <TouchableOpacity
+            style={styles.viewReservation}
+            activeOpacity={0.7}
+            onPress={() => router.push({ pathname: "/reservation-detail", params: { id: notif.reservationId! } })}
+          >
+            <Text style={styles.viewReservationText}>View reservation</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.primaryColor} />
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Contact support button */}
@@ -359,6 +370,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 12,
     backgroundColor: Colors.white,
+  },
+  viewReservation: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.primaryColor,
+  },
+  viewReservationText: {
+    fontFamily: Fonts.bold,
+    fontSize: FontSizes.medium,
+    color: Colors.primaryColor,
   },
   supportBtn: {
     backgroundColor: Colors.primaryColor,

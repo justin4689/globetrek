@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/cloudinary');
 const { prisma } = require('../config/db');
 const serialize = require('../utils/serialize');
+const { endAllSessions } = require('../services/session.service');
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
@@ -97,6 +98,8 @@ const updatePassword = async (req, res) => {
       where: { id: user.id },
       data: { password: await bcrypt.hash(newPassword, 12) },
     });
+    // Keep this device signed in, sign out all the others
+    await endAllSessions(user.id, req.sessionId);
 
     res.status(200).json({ success: true, message: 'Password updated successfully' });
   } catch (error) {

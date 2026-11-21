@@ -137,8 +137,15 @@ async function seed() {
     },
   ];
 
+  // Reservation notifications point to the reservation they are about
+  const byDestination = Object.fromEntries(reservations.map((r) => [r.destinationName, r.id]));
+  const RESERVATION_TYPES = ['reservation_confirmed', 'reservation_cancelled', 'rate_booking'];
   const notifications = await prisma.notification.createMany({
-    data: notificationsData.map((n) => ({ ...n, userId: user.id })),
+    data: notificationsData.map((n) => ({
+      ...n,
+      userId: user.id,
+      reservationId: RESERVATION_TYPES.includes(n.type) ? byDestination[n.destination] ?? null : null,
+    })),
   });
   console.log(`✅ ${notifications.count} notifications seeded`);
 

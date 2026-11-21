@@ -3,18 +3,9 @@ const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/db');
 const serialize = require('../utils/serialize');
 const sendEmail = require('../services/email.service');
+const { createSession, rotateSession, endSession, endAllSessions } = require('../services/session.service');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const generateAccessToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-  });
-
-const generateRefreshToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-  });
 
 const generateOtp = () =>
   Math.floor(10000 + Math.random() * 90000).toString(); // 5 digits
@@ -47,14 +38,8 @@ const sendVerificationEmail = async (user, otp) => {
 };
 
 const sendTokens = async (user, res, statusCode = 200) => {
-  const accessToken = generateAccessToken(user.id);
-  const refreshToken = generateRefreshToken(user.id);
-
-  // Persist hashed refresh token
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { refreshToken: await bcrypt.hash(refreshToken, 8) },
-  });
+  // A new session per login: other devices stay signed in
+  const { accessToken, refreshToken } = await createSession(user.id);
 
   res.status(statusCode).json({
     success: true,
@@ -335,6 +320,8 @@ const resetPassword = async (req, res) => {
       where: { id: user.id },
       data: { password: await bcrypt.hash(password, 12) },
     });
+    // Whoever had access before the reset is signed out everywhere
+    await endAllSessions(user.id);
 
     res.status(200).json({
       success: true,
@@ -359,47 +346,18 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-    } catch {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid or expired refresh token',
-      });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      omit: { refreshToken: false },
-    });
-    if (!user || !user.refreshToken) {
+    const rotated = await rotateSession(token);
+    if (!rotated) {
       return res.status(401).json({
         success: false,
         message: 'Session expired. Please log in again.',
       });
     }
 
-    const isValid = await bcrypt.compare(token, user.refreshToken);
-    if (!isValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid refresh token',
-      });
-    }
-
-    const newAccessToken = generateAccessToken(user.id);
-    const newRefreshToken = generateRefreshToken(user.id);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: await bcrypt.hash(newRefreshToken, 8) },
-    });
-
     res.status(200).json({
       success: true,
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+      accessToken: rotated.accessToken,
+      refreshToken: rotated.refreshToken,
     });
   } catch (error) {
     console.error('Refresh token error:', error);
@@ -411,10 +369,8 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    await prisma.user.updateMany({
-      where: { id: req.user.id },
-      data: { refreshToken: null },
-    });
+    // Only this device is signed out
+    await endSession(req.sessionId);
 
     res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {

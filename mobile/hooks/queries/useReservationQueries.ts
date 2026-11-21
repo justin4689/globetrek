@@ -23,6 +23,7 @@ export function useCancelReservation() {
     onSuccess: (_res, id) => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       queryClient.invalidateQueries({ queryKey: ["reservation", id] });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }); // a cancellation notification was created
     },
   });
 }

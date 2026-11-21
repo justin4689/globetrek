@@ -43,13 +43,26 @@ model User {
   isEmailVerified Boolean   @default(false)
   otp             String?
   otpExpiry       DateTime?
-  refreshToken    String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   favorites     Favorite[]
   reservations  Reservation[]
   notifications Notification[]
+  sessions      Session[]
+}
+
+// One row per signed-in device: logging in elsewhere no longer signs the other devices out
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String   @db.VarChar(64) // sha256 of the current refresh token (rotated on refresh)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Destination {
@@ -112,26 +125,32 @@ model Reservation {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  notifications Notification[]
+
   @@index([userId])
   @@index([destinationId])
 }
 
 model Notification {
-  id           String           @id @default(cuid())
-  userId       String
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type         NotificationType
-  title        String
-  subtitle     String
-  destination  String?
-  checkIn      String?
-  checkOut     String?
-  amount       Float?
-  reason       String?          @db.Text
-  detailReason String?          @db.Text
-  isRead       Boolean          @default(false)
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id            String           @id @default(cuid())
+  userId        String
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          NotificationType
+  title         String
+  subtitle      String
+  destination   String?
+  checkIn       String?
+  checkOut      String?
+  amount        Float?
+  reason        String?          @db.Text
+  detailReason  String?          @db.Text
+  isRead        Boolean          @default(false)
+  // Reservation this notification is about (kept null if the reservation is deleted)
+  reservationId String?
+  reservation   Reservation?     @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   @@index([userId])
+  @@index([reservationId])
 }

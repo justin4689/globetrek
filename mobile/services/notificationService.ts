@@ -19,6 +19,7 @@ export interface ApiNotification {
   reason?: string;
   detailReason?: string;
   isRead: boolean;
+  reservationId?: string | null;
   createdAt: string;
 }
 

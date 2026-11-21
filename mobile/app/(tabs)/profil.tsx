@@ -4,10 +4,12 @@ import Images from "@/utils/images";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { router } from "expo-router";
-import { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -18,13 +20,28 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
+const PREFS_KEY = "preferences";
+type Preferences = { notifications: boolean; locationAccess: boolean; faceId: boolean };
+const DEFAULT_PREFS: Preferences = { notifications: true, locationAccess: false, faceId: false };
+
 export default function Profil() {
   const { logout, user } = useAuth();
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
   const phone = user?.phone ? `${user.countryCode} ${user.phone}`.trim() : "";
-  const [notifications, setNotifications] = useState(true);
-  const [locationAccess, setLocationAccess] = useState(true);
-  const [faceId, setFaceId] = useState(true);
+  const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFS);
+
+  // Preferences are remembered on this device
+  useEffect(() => {
+    AsyncStorage.getItem(PREFS_KEY)
+      .then((raw) => raw && setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(raw) }))
+      .catch(() => {});
+  }, []);
+
+  const setPref = (key: keyof Preferences) => (value: boolean) => {
+    const next = { ...prefs, [key]: value };
+    setPrefs(next);
+    AsyncStorage.setItem(PREFS_KEY, JSON.stringify(next)).catch(() => {});
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -144,12 +161,12 @@ export default function Profil() {
               </View>
               <View>
                 <Text style={styles.menuLabel}>Notifications</Text>
-                <Text style={styles.menuSub}>Enable to receive push notification</Text>
+                <Text style={styles.menuSub}>Receive booking updates</Text>
               </View>
             </View>
             <Switch
-              value={notifications}
-              onValueChange={setNotifications}
+              value={prefs.notifications}
+              onValueChange={setPref("notifications")}
               trackColor={{ false: "#E0E0E0", true: Colors.primaryColor }}
               thumbColor="#fff"
               ios_backgroundColor="#E0E0E0"
@@ -170,12 +187,12 @@ export default function Profil() {
               </View>
               <View>
                 <Text style={styles.menuLabel}>Location access</Text>
-                <Text style={styles.menuSub}>Activate location</Text>
+                <Text style={styles.menuSub}>Suggest destinations near you</Text>
               </View>
             </View>
             <Switch
-              value={locationAccess}
-              onValueChange={setLocationAccess}
+              value={prefs.locationAccess}
+              onValueChange={setPref("locationAccess")}
               trackColor={{ false: "#E0E0E0", true: Colors.primaryColor }}
               thumbColor="#fff"
               ios_backgroundColor="#E0E0E0"
@@ -184,7 +201,9 @@ export default function Profil() {
 
           <View style={styles.divider} />
 
-          {/* Face ID */}
+          {/* Face ID only exists on iPhone */}
+          {Platform.OS === "ios" && (
+          <>
           <View style={styles.menuItem}>
             <View style={styles.menuLeft}>
               <View style={styles.menuIconWrapper}>
@@ -195,13 +214,13 @@ export default function Profil() {
                 />
               </View>
               <View>
-                <Text style={styles.menuLabel}>Face id</Text>
-                <Text style={styles.menuSub}>Activate or deactivate face id</Text>
+                <Text style={styles.menuLabel}>Face ID</Text>
+                <Text style={styles.menuSub}>Unlock the app with Face ID</Text>
               </View>
             </View>
             <Switch
-              value={faceId}
-              onValueChange={setFaceId}
+              value={prefs.faceId}
+              onValueChange={setPref("faceId")}
               trackColor={{ false: "#E0E0E0", true: Colors.primaryColor }}
               thumbColor="#fff"
               ios_backgroundColor="#E0E0E0"
@@ -209,6 +228,8 @@ export default function Profil() {
           </View>
 
           <View style={styles.divider} />
+          </>
+          )}
 
           {/* Help & Support */}
           <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => router.push('/help-support')}>
