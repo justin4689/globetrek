@@ -1,10 +1,11 @@
-import { destinations } from "@/data/home";
+import { useFavorites, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
-import { useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -18,16 +19,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
-const INITIAL_FAVORITES = ["1", "2", "3"];
-
 export default function Favorites() {
-  const [favIds, setFavIds] = useState<string[]>(INITIAL_FAVORITES);
+  const { data: favorites = [], isPending, isError, refetch, isRefetching } = useFavorites();
+  const toggleFavorite = useToggleFavorite();
 
-  const favDestinations = destinations.filter((d) => favIds.includes(d.id));
+  const favDestinations = favorites.map((f) => f.destination);
 
-  const removeFavorite = (id: string) => {
-    setFavIds((prev) => prev.filter((f) => f !== id));
-  };
+  const removeFavorite = (id: string) =>
+    toggleFavorite.mutate({ destinationId: id, isFavorite: true });
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -42,7 +41,9 @@ export default function Favorites() {
       <FlatList
         key="favorites-2col"
         data={favDestinations}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
+        onRefresh={refetch}
+        refreshing={isRefetching}
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
@@ -51,13 +52,13 @@ export default function Favorites() {
           <TouchableOpacity
             style={styles.destinationCard}
             onPress={() =>
-              router.push({ pathname: "/destination/[id]" as any, params: { id: item.id } })
+              router.push({ pathname: "/destination/[id]" as any, params: { id: item._id } })
             }
             activeOpacity={0.95}
           >
             <View style={styles.destImageContainer}>
               <Image
-                source={item.image}
+                source={imageSource(item.images[0])}
                 style={styles.destinationImage}
                 resizeMode="cover"
               />
@@ -70,7 +71,7 @@ export default function Favorites() {
               {/* Heart button — always filled, tap to remove */}
               <TouchableOpacity
                 style={styles.heartButton}
-                onPress={() => removeFavorite(item.id)}
+                onPress={() => removeFavorite(item._id)}
                 activeOpacity={0.8}
               >
                 <Ionicons name="heart" size={16} color={Colors.primaryColor} />
@@ -98,6 +99,17 @@ export default function Favorites() {
           </TouchableOpacity>
         )}
         ListEmptyComponent={
+          isPending ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color={Colors.primaryColor} />
+            </View>
+          ) : isError ? (
+            <TouchableOpacity style={styles.emptyState} onPress={() => refetch()}>
+              <Ionicons name="cloud-offline-outline" size={64} color="#E0E0E0" />
+              <Text style={styles.emptyTitle}>Could not load favorites</Text>
+              <Text style={styles.emptySub}>Tap to retry</Text>
+            </TouchableOpacity>
+          ) : (
           <View style={styles.emptyState}>
             <Ionicons name="heart-outline" size={72} color="#E0E0E0" />
             <Text style={styles.emptyTitle}>No favorites yet</Text>
@@ -110,6 +122,7 @@ export default function Favorites() {
               <Text style={styles.exploreBtnText}>Explore destinations</Text>
             </TouchableOpacity>
           </View>
+          )
         }
       />
     </SafeAreaView>

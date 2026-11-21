@@ -1,9 +1,12 @@
-import { reservations, type Reservation } from "@/data/reservations";
+import { useReservations } from "@/hooks/queries/useReservationQueries";
+import type { ApiReservation } from "@/services/reservationService";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -13,7 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const STATUS_COLORS: Record<Reservation["status"], { bg: string; text: string; label: string }> = {
+const STATUS_COLORS: Record<ApiReservation["status"], { bg: string; text: string; label: string }> = {
   upcoming:  { bg: "#EBF5FF", text: "#1E90FF", label: "Upcoming" },
   completed: { bg: "#E9FBF0", text: "#27AE60", label: "Completed" },
   cancelled: { bg: "#FEEFEF", text: "#E74C3C", label: "Cancelled" },
@@ -24,17 +27,17 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function ReservationCard({ item }: { item: Reservation }) {
+function ReservationCard({ item }: { item: ApiReservation }) {
   const status = STATUS_COLORS[item.status];
   return (
     <TouchableOpacity
       style={styles.card}
       activeOpacity={0.85}
       onPress={() =>
-        router.push({ pathname: "/reservation-detail", params: { id: item.id } })
+        router.push({ pathname: "/reservation-detail", params: { id: item._id } })
       }
     >
-      <Image source={item.image} style={styles.cardImage} resizeMode="cover" />
+      <Image source={imageSource(item.destination?.images?.[0])} style={styles.cardImage} resizeMode="cover" />
       <View style={styles.cardBody}>
         <View style={styles.cardTop}>
           <Text style={styles.cardName} numberOfLines={1}>{item.destinationName}</Text>
@@ -75,6 +78,8 @@ function ReservationCard({ item }: { item: Reservation }) {
 export default function Reservations() {
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
 
+  const { data: reservations = [], isPending, isError, refetch, isRefetching } = useReservations();
+
   const filtered = reservations.filter((r) =>
     tab === "upcoming" ? r.status === "upcoming" : r.status !== "upcoming"
   );
@@ -111,16 +116,30 @@ export default function Reservations() {
       {/* List */}
       <FlatList
         data={filtered}
-        keyExtractor={(r) => r.id}
+        keyExtractor={(r) => r._id}
+        onRefresh={refetch}
+        refreshing={isRefetching}
         renderItem={({ item }) => <ReservationCard item={item} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="calendar-outline" size={64} color="#E0E0E0" />
-            <Text style={styles.emptyTitle}>No reservations</Text>
-            <Text style={styles.emptySub}>You have no {tab} trips yet.</Text>
-          </View>
+          isPending ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color={Colors.primaryColor} />
+            </View>
+          ) : isError ? (
+            <TouchableOpacity style={styles.emptyState} onPress={() => refetch()}>
+              <Ionicons name="cloud-offline-outline" size={64} color="#E0E0E0" />
+              <Text style={styles.emptyTitle}>Could not load reservations</Text>
+              <Text style={styles.emptySub}>Tap to retry</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="calendar-outline" size={64} color="#E0E0E0" />
+              <Text style={styles.emptyTitle}>No reservations</Text>
+              <Text style={styles.emptySub}>You have no {tab} trips yet.</Text>
+            </View>
+          )
         }
       />
     </SafeAreaView>

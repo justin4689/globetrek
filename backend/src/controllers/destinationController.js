@@ -21,7 +21,10 @@ const getDestinations = async (req, res) => {
     }
     if (featured === 'true') where.isFeatured = true;
     // MySQL default collation is case-insensitive, like the former $regex 'i'
-    if (search) where.name = { contains: String(search) };
+    if (search) {
+      const term = String(search).trim();
+      where.OR = [{ name: { contains: term } }, { country: { contains: term } }];
+    }
 
     const [destinations, total] = await Promise.all([
       prisma.destination.findMany({ where, skip: (page - 1) * limit, take: limit }),

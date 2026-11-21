@@ -1,9 +1,13 @@
-import { destinations } from "@/data/home";
+import { useDestinations } from "@/hooks/queries/useDestinationQueries";
+import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
+import { router } from "expo-router";
 import { ComponentRef, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -30,25 +34,26 @@ type Props = {
 
 export default function SearchModal({ visible, onClose }: Props) {
   const [query, setQuery] = useState("");
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const insets = useSafeAreaInsets();
 
-  const results = query.trim()
-    ? destinations.filter(
-        (d) =>
-          d.name.toLowerCase().includes(query.toLowerCase()) ||
-          d.country.toLowerCase().includes(query.toLowerCase())
-      )
-    : [];
+  // Wait for the user to pause typing before hitting the API
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const searchQuery = useDestinations({ search: debouncedQuery });
+  const results = debouncedQuery ? searchQuery.data ?? [] : [];
+  const isSearching = !!query.trim() && (query.trim() !== debouncedQuery || searchQuery.isFetching);
+
+  const favoriteIds = useFavoriteIds();
+  const toggleFavorite = useToggleFavorite();
+
+  const openDestination = (id: string) => {
+    onClose();
+    router.push({ pathname: "/destination/[id]" as any, params: { id } });
   };
 
   useEffect(() => {
@@ -112,6 +117,10 @@ export default function SearchModal({ visible, onClose }: Props) {
                 </TouchableOpacity>
               ))}
             </View>
+          ) : isSearching && results.length === 0 ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color={Colors.primaryColor} />
+            </View>
           ) : results.length === 0 ? (
             /* No results */
             <View style={styles.emptyState}>
@@ -122,17 +131,21 @@ export default function SearchModal({ visible, onClose }: Props) {
             /* Results — 2-column grid */
             <FlatList
               data={results}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item._id}
               numColumns={2}
               columnWrapperStyle={styles.row}
               contentContainerStyle={styles.resultsList}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <TouchableOpacity
+                  style={styles.card}
+                  activeOpacity={0.95}
+                  onPress={() => openDestination(item._id)}
+                >
                   <View style={styles.cardImageContainer}>
                     <Image
-                      source={item.image}
+                      source={imageSource(item.images[0])}
                       style={styles.cardImage}
                       resizeMode="cover"
                     />
@@ -141,13 +154,18 @@ export default function SearchModal({ visible, onClose }: Props) {
                     </BlurView>
                     <TouchableOpacity
                       style={styles.heartButton}
-                      onPress={() => toggleFavorite(item.id)}
+                      onPress={() =>
+                        toggleFavorite.mutate({
+                          destinationId: item._id,
+                          isFavorite: favoriteIds.has(item._id),
+                        })
+                      }
                       activeOpacity={0.8}
                     >
                       <Ionicons
-                        name={favorites.has(item.id) ? "heart" : "heart-outline"}
+                        name={favoriteIds.has(item._id) ? "heart" : "heart-outline"}
                         size={16}
-                        color={favorites.has(item.id) ? Colors.primaryColor : Colors.primaryColor}
+                        color={Colors.primaryColor}
                       />
                     </TouchableOpacity>
                     <BlurView intensity={60} tint="light" style={styles.cardInfo}>
@@ -168,7 +186,7 @@ export default function SearchModal({ visible, onClose }: Props) {
                       </View>
                     </BlurView>
                   </View>
-                </View>
+                </TouchableOpacity>
               )}
             />
           )}

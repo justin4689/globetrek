@@ -6,6 +6,14 @@ export const BASE_URL = __DEV__
   ? `http://${LOCAL_IP}:5001/api`
   : "https://api.globetrek.com/api";
 
+export const API_ORIGIN = BASE_URL.replace(/\/api$/, "");
+
+/** Resolves an image path from the API ("/images/x.jpg" or a full URL) to an Image source. */
+export function imageSource(path: string | null | undefined, fallback?: number) {
+  if (!path) return fallback;
+  return { uri: /^https?:\/\//.test(path) ? path : `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}` };
+}
+
 type RequestOptions = RequestInit & { skipAuth?: boolean };
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {

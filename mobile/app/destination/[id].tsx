@@ -1,10 +1,13 @@
-import { destinations } from "@/data/home";
-import type { Review } from "@/types/home";
+import { useDestination } from "@/hooks/queries/useDestinationQueries";
+import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
+import type { ApiReview } from "@/services/destinationService";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -37,11 +40,15 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({ review }: { review: ApiReview }) {
   return (
     <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Image source={review.avatar} style={styles.reviewAvatar} resizeMode="cover" />
+        <Image
+          source={imageSource(review.avatar, require("../../assets/image/avatar.jpg"))}
+          style={styles.reviewAvatar}
+          resizeMode="cover"
+        />
         <View style={styles.reviewMeta}>
           <Text style={styles.reviewName}>{review.name}</Text>
           <View style={styles.reviewRatingRow}>
@@ -61,15 +68,38 @@ function ReviewCard({ review }: { review: Review }) {
 export default function DestinationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const destination = destinations.find((d) => d.id === id);
+  const { data: destination, isPending, isError, refetch } = useDestination(id);
+  const favoriteIds = useFavoriteIds();
+  const toggleFavorite = useToggleFavorite();
   const [activeTab, setActiveTab] = useState<"description" | "reviews">("description");
   const [activeReview, setActiveReview] = useState(0);
   const reviewsRef = useRef<FlatList>(null);
 
-  if (!destination) return null;
+  if (isPending || isError || !destination) {
+    return (
+      <View style={[styles.root, styles.stateScreen]}>
+        {isPending ? (
+          <ActivityIndicator color={Colors.primaryColor} />
+        ) : (
+          <>
+            <Text style={styles.stateText}>Could not load this destination.</Text>
+            <TouchableOpacity onPress={() => refetch()}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.retryText}>Go back</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    );
+  }
 
-  const shownThumbs = destination.images.slice(0, 3);
-  const extraCount = destination.images.length - 3;
+  const images = destination.images;
+  const reviews = destination.reviews ?? [];
+  const shownThumbs = images.slice(0, 3);
+  const extraCount = images.length - 3;
+  const isFavorite = favoriteIds.has(destination._id);
 
   const onReviewScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / REVIEW_CARD_WIDTH);
@@ -82,7 +112,7 @@ export default function DestinationDetail() {
         {/* Hero */}
         <View style={styles.heroContainer}>
           <Image
-            source={destination.image}
+            source={imageSource(images[0])}
             style={styles.heroImage}
             resizeMode="cover"
           />
@@ -100,19 +130,21 @@ export default function DestinationDetail() {
           <View style={styles.thumbsRow}>
             {shownThumbs.map((img, i) => (
               <TouchableOpacity key={i} style={styles.thumbWrapper} activeOpacity={0.85}>
-                <Image source={img} style={styles.thumb} resizeMode="cover" />
+                <Image source={imageSource(img)} style={styles.thumb} resizeMode="cover" />
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.thumbWrapper} activeOpacity={0.85}>
-              <Image
-                source={destination.images[3]}
-                style={styles.thumb}
-                resizeMode="cover"
-              />
-              <View style={styles.thumbOverlay}>
-                <Text style={styles.thumbOverlayText}>+{extraCount}</Text>
-              </View>
-            </TouchableOpacity>
+            {extraCount > 0 && (
+              <TouchableOpacity style={styles.thumbWrapper} activeOpacity={0.85}>
+                <Image
+                  source={imageSource(images[3])}
+                  style={styles.thumb}
+                  resizeMode="cover"
+                />
+                <View style={styles.thumbOverlay}>
+                  <Text style={styles.thumbOverlayText}>+{extraCount}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -180,8 +212,8 @@ export default function DestinationDetail() {
             <View style={styles.reviewsSection}>
               <FlatList
                 ref={reviewsRef}
-                data={destination.reviews}
-                keyExtractor={(r) => r.id}
+                data={reviews}
+                keyExtractor={(r) => r._id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={REVIEW_CARD_WIDTH + 16}
@@ -193,7 +225,7 @@ export default function DestinationDetail() {
               />
               {/* Dots */}
               <View style={styles.dotsRow}>
-                {destination.reviews.map((_, i) => (
+                {reviews.map((_, i) => (
                   <View
                     key={i}
                     style={[styles.dot, i === activeReview && styles.dotActive]}
@@ -212,8 +244,16 @@ export default function DestinationDetail() {
         <TouchableOpacity style={styles.bookBtn} activeOpacity={0.85}>
           <Text style={styles.bookText}>Book</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bookmarkBtn} activeOpacity={0.85}>
-          <Ionicons name="bookmark-outline" size={24} color={Colors.textColor} />
+        <TouchableOpacity
+          style={styles.bookmarkBtn}
+          activeOpacity={0.85}
+          onPress={() => toggleFavorite.mutate({ destinationId: destination._id, isFavorite })}
+        >
+          <Ionicons
+            name={isFavorite ? "bookmark" : "bookmark-outline"}
+            size={24}
+            color={isFavorite ? Colors.primaryColor : Colors.textColor}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -224,6 +264,21 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  stateScreen: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  stateText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#888",
+  },
+  retryText: {
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    color: Colors.primaryColor,
   },
   heroContainer: {
     width,

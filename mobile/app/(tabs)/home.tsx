@@ -1,12 +1,18 @@
-import { categories, destinations, recommended } from "@/data/home";
-import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import SearchModal from "@/components/SearchModal";
+import { useAuth } from "@/context/AuthContext";
+import { useCategories, useDestinations, useFeaturedDestinations } from "@/hooks/queries/useDestinationQueries";
+import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
+import { useUnreadNotificationsCount } from "@/hooks/queries/useReservationQueries";
+import { imageSource } from "@/utils/api";
+import { Colors, Fonts, FontSizes } from "@/utils/constants";
+import { summarize } from "@/utils/text";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   ScrollView,
@@ -22,18 +28,25 @@ const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 32 - 12) / 2;
 
 export default function Home() {
-  const [activeCategory, setActiveCategory] = useState("1");
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const { user } = useAuth();
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
+  const { data: categories = [] } = useCategories();
+  const destinationsQuery = useDestinations({ category: activeCategory });
+  const destinations = destinationsQuery.data ?? [];
+  const { data: recommended = [] } = useFeaturedDestinations();
+  const { data: unreadCount = 0 } = useUnreadNotificationsCount();
+  const favoriteIds = useFavoriteIds();
+  const toggleFavorite = useToggleFavorite();
+
+  const onToggleFavorite = (id: string) =>
+    toggleFavorite.mutate({ destinationId: id, isFavorite: favoriteIds.has(id) });
+
+  const openDestination = (id: string) =>
+    router.push({ pathname: "/destination/[id]" as any, params: { id } });
+
+  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
@@ -42,7 +55,7 @@ export default function Home() {
         <View style={styles.headerLeft}>
           <View style={styles.imageWrapper}>
             <Image
-              source={require("../../assets/image/avatar.jpg")}
+              source={imageSource(user?.avatar, require("../../assets/image/avatar.jpg"))}
               resizeMode="cover"
               style={{ width: "100%", height: "100%" }}
             />
@@ -56,14 +69,16 @@ export default function Home() {
                   fontFamily: Fonts.bold,
                 }}
               >
-                John Doe
+                {fullName}
               </Text>{" "}
               👋
             </Text>
-            <View style={styles.headerLocationContainer}>
-              <Ionicons name="location" size={14} color="black" />
-              <Text style={styles.headerLocation}>Ivory Coast</Text>
-            </View>
+            {!!user?.location && (
+              <View style={styles.headerLocationContainer}>
+                <Ionicons name="location" size={14} color="black" />
+                <Text style={styles.headerLocation}>{user.location}</Text>
+              </View>
+            )}
           </View>
         </View>
         <View style={styles.headerRight}>
@@ -73,9 +88,11 @@ export default function Home() {
             activeOpacity={0.8}
           >
             <Ionicons name="notifications-outline" size={32} color="black" />
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 9 ? "9+" : unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -122,20 +139,21 @@ export default function Home() {
               key={cat.id}
               style={[
                 styles.categoryChip,
-                activeCategory === cat.id && styles.categoryChipActive,
+                activeCategory === cat.name && styles.categoryChipActive,
               ]}
-              onPress={() => setActiveCategory(cat.id)}
+              // Tap again on the active category to show every destination
+              onPress={() => setActiveCategory((prev) => (prev === cat.name ? null : cat.name))}
               activeOpacity={0.75}
             >
               <MaterialCommunityIcons
                 name={cat.icon as any}
                 size={18}
-                color={activeCategory === cat.id ? "white" : Colors.textColor}
+                color={activeCategory === cat.name ? "white" : Colors.textColor}
               />
               <Text
                 style={[
                   styles.categoryText,
-                  activeCategory === cat.id && styles.categoryTextActive,
+                  activeCategory === cat.name && styles.categoryTextActive,
                 ]}
               >
                 {cat.name}
@@ -145,17 +163,32 @@ export default function Home() {
         </ScrollView>
 
         {/* Destination cards grid */}
+        {destinationsQuery.isPending ? (
+          <View style={styles.stateBox}>
+            <ActivityIndicator color={Colors.primaryColor} />
+          </View>
+        ) : destinationsQuery.isError ? (
+          <TouchableOpacity style={styles.stateBox} onPress={() => destinationsQuery.refetch()}>
+            <Text style={styles.stateText}>Could not load destinations.</Text>
+            <Text style={styles.retryText}>Tap to retry</Text>
+          </TouchableOpacity>
+        ) : destinations.length === 0 ? (
+          <View style={styles.stateBox}>
+            <Text style={styles.stateText}>No destinations in this category yet.</Text>
+          </View>
+        ) : null}
+
         <View style={styles.destinationsGrid}>
           {destinations.map((dest) => (
             <TouchableOpacity
-              key={dest.id}
+              key={dest._id}
               style={styles.destinationCard}
-              onPress={() => router.push({ pathname: "/destination/[id]" as any, params: { id: dest.id } })}
+              onPress={() => openDestination(dest._id)}
               activeOpacity={0.95}
             >
               <View style={styles.destImageContainer}>
                 <Image
-                  source={dest.image}
+                  source={imageSource(dest.images[0])}
                   style={styles.destinationImage}
                   resizeMode="cover"
                 />
@@ -164,15 +197,13 @@ export default function Home() {
                 </BlurView>
                 <TouchableOpacity
                   style={styles.heartButton}
-                  onPress={() => toggleFavorite(dest.id)}
+                  onPress={() => onToggleFavorite(dest._id)}
                   activeOpacity={0.8}
                 >
                   <Ionicons
-                    name={favorites.has(dest.id) ? "heart" : "heart-outline"}
+                    name={favoriteIds.has(dest._id) ? "heart" : "heart-outline"}
                     size={16}
-                    color={
-                      favorites.has(dest.id) ? Colors.primaryColor : Colors.primaryColor 
-                    }
+                    color={Colors.primaryColor}
                   />
                 </TouchableOpacity>
 
@@ -207,21 +238,18 @@ export default function Home() {
         </View>
 
         {/* Recommended */}
-        <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Recommended</Text>
+        {recommended.length > 0 && (
+          <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Recommended</Text>
+        )}
         {recommended.map((item) => (
           <TouchableOpacity
-            key={item.id}
+            key={item._id}
             style={styles.recommendedCard}
             activeOpacity={0.9}
-            onPress={() =>
-              router.push({
-                pathname: "/destination/[id]" as any,
-                params: { id: item.destinationId },
-              })
-            }
+            onPress={() => openDestination(item._id)}
           >
             <Image
-              source={item.image}
+              source={imageSource(item.images[0])}
               style={styles.recommendedImage}
               resizeMode="cover"
             />
@@ -236,7 +264,7 @@ export default function Home() {
                 </View>
               </View>
               <Text style={styles.recommendedDesc} numberOfLines={2}>
-                {item.description}
+                {summarize(item.description)}
               </Text>
               <View style={styles.recommendedFooter}>
                 <Text style={styles.recommendedPrice}>{item.price}$</Text>
@@ -477,6 +505,21 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
     fontSize: 11,
     color: "#777",
+  },
+  stateBox: {
+    paddingVertical: 32,
+    alignItems: "center",
+    gap: 6,
+  },
+  stateText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#888",
+  },
+  retryText: {
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    color: Colors.primaryColor,
   },
   recommendedCard: {
     flexDirection: "row",

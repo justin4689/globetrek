@@ -1,8 +1,11 @@
-import { reservations, type Reservation } from "@/data/reservations";
+import { useCancelReservation, useReservation } from "@/hooks/queries/useReservationQueries";
+import type { ApiReservation } from "@/services/reservationService";
+import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   Image,
@@ -17,7 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const { width } = Dimensions.get("window");
 
 const STATUS_CONFIG: Record<
-  Reservation["status"],
+  ApiReservation["status"],
   { bg: string; text: string; label: string; icon: string }
 > = {
   upcoming:  { bg: "#EBF5FF", text: "#1E90FF", label: "Upcoming",  icon: "time-outline" },
@@ -52,13 +55,33 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
 export default function ReservationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const reservation = reservations.find((r) => r.id === id);
+  const { data: reservation, isPending, isError, refetch } = useReservation(id);
+  const cancelReservation = useCancelReservation();
 
-  if (!reservation) return null;
+  if (isPending || isError || !reservation) {
+    return (
+      <View style={[styles.root, styles.stateScreen]}>
+        {isPending ? (
+          <ActivityIndicator color={Colors.primaryColor} />
+        ) : (
+          <>
+            <Text style={styles.stateText}>Could not load this reservation.</Text>
+            <TouchableOpacity onPress={() => refetch()}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.retryText}>Go back</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    );
+  }
 
   const status = STATUS_CONFIG[reservation.status];
-  const numNights = nights(reservation.checkIn, reservation.checkOut);
+  const numNights = Math.max(1, nights(reservation.checkIn, reservation.checkOut));
   const pricePerNight = Math.round(reservation.price / numNights);
+  const destinationId = reservation.destination?._id;
 
   const handleCancel = () => {
     Alert.alert(
@@ -66,7 +89,16 @@ export default function ReservationDetail() {
       "Are you sure you want to cancel this reservation? This action cannot be undone.",
       [
         { text: "Keep it", style: "cancel" },
-        { text: "Cancel booking", style: "destructive", onPress: () => router.back() },
+        {
+          text: "Cancel booking",
+          style: "destructive",
+          onPress: () =>
+            cancelReservation.mutate(reservation._id, {
+              onSuccess: () => router.back(),
+              onError: (err) =>
+                Alert.alert("Cancellation failed", err instanceof Error ? err.message : "Please try again."),
+            }),
+        },
       ]
     );
   };
@@ -76,7 +108,7 @@ export default function ReservationDetail() {
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         {/* Hero */}
         <View style={{ height: 260 }}>
-          <Image source={reservation.image} style={styles.hero} resizeMode="cover" />
+          <Image source={imageSource(reservation.destination?.images?.[0])} style={styles.hero} resizeMode="cover" />
           <View style={styles.heroOverlay} />
           <TouchableOpacity
             style={[styles.backBtn, { top: insets.top + 12 }]}
@@ -169,8 +201,9 @@ export default function ReservationDetail() {
           <TouchableOpacity
             style={styles.viewDestBtn}
             activeOpacity={0.85}
+            disabled={!destinationId}
             onPress={() =>
-              router.push({ pathname: "/destination/[id]", params: { id: reservation.destinationId } })
+              router.push({ pathname: "/destination/[id]", params: { id: destinationId! } })
             }
           >
             <Text style={styles.viewDestText}>View destination</Text>
@@ -179,8 +212,13 @@ export default function ReservationDetail() {
             style={styles.cancelBtn}
             activeOpacity={0.85}
             onPress={handleCancel}
+            disabled={cancelReservation.isPending}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            {cancelReservation.isPending ? (
+              <ActivityIndicator color="#E74C3C" />
+            ) : (
+              <Text style={styles.cancelText}>Cancel</Text>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -192,6 +230,21 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#F7F8FA",
+  },
+  stateScreen: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  stateText: {
+    fontFamily: Fonts.regular,
+    fontSize: 14,
+    color: "#888",
+  },
+  retryText: {
+    fontFamily: Fonts.bold,
+    fontSize: 14,
+    color: Colors.primaryColor,
   },
 
   /* Hero */

@@ -35,6 +35,9 @@ const authLimiter = rateLimit({
 
 app.use(express.json({ limit: '10mb' }));
 
+// Destination photos (stored in DB as "/images/<file>", resolved by the client against the API origin)
+app.use('/images', express.static(require('path').join(__dirname, '../public/images'), { maxAge: '7d' }));
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 app.get('/', (req, res) => {
