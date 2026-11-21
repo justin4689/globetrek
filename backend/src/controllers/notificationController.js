@@ -1,13 +1,17 @@
-const Notification = require('../models/Notification');
+const { prisma } = require('../config/db');
+const serialize = require('../utils/serialize');
 
 // ─── GET /notifications ────────────────────────────────────────────────────────
 
 const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const notifications = await prisma.notification.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: 'desc' },
+    });
     const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-    res.status(200).json({ success: true, unreadCount, notifications });
+    res.status(200).json({ success: true, unreadCount, notifications: serialize(notifications) });
   } catch (error) {
     console.error('getNotifications error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -18,17 +22,17 @@ const getNotifications = async (req, res) => {
 
 const markAsRead = async (req, res) => {
   try {
-    const notification = await Notification.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      { isRead: true },
-      { new: true }
-    );
+    const { count } = await prisma.notification.updateMany({
+      where: { id: req.params.id, userId: req.user.id },
+      data: { isRead: true },
+    });
 
-    if (!notification) {
+    if (count === 0) {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
 
-    res.status(200).json({ success: true, notification });
+    const notification = await prisma.notification.findUnique({ where: { id: req.params.id } });
+    res.status(200).json({ success: true, notification: serialize(notification) });
   } catch (error) {
     console.error('markAsRead error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -39,7 +43,10 @@ const markAsRead = async (req, res) => {
 
 const markAllAsRead = async (req, res) => {
   try {
-    await Notification.updateMany({ user: req.user.id, isRead: false }, { isRead: true });
+    await prisma.notification.updateMany({
+      where: { userId: req.user.id, isRead: false },
+      data: { isRead: true },
+    });
     res.status(200).json({ success: true, message: 'All notifications marked as read' });
   } catch (error) {
     console.error('markAllAsRead error:', error);

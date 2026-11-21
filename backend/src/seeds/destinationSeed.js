@@ -1,8 +1,7 @@
 const dotenv = require('dotenv');
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
-const mongoose = require('mongoose');
-const Destination = require('../models/Destination');
+const { prisma } = require('../config/db');
 
 // Placeholder images — remplace par tes URLs Cloudinary quand tu uploades les vraies images
 const img = (name) => `https://placehold.co/800x600?text=${encodeURIComponent(name)}`;
@@ -123,20 +122,29 @@ const destinations = [
 ];
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('✅ Connected to MongoDB');
+  await prisma.$connect();
+  console.log('✅ Connected to MySQL');
 
-  await Destination.deleteMany({});
-  const inserted = await Destination.insertMany(destinations);
+  await prisma.destination.deleteMany({}); // cascades to reviews, favorites, reservations
+
+  const inserted = [];
+  for (const { reviews = [], ...data } of destinations) {
+    inserted.push(
+      await prisma.destination.create({
+        data: { ...data, reviews: { create: reviews } },
+      })
+    );
+  }
 
   console.log(`✅ ${inserted.length} destinations seeded:`);
-  inserted.forEach((d) => console.log(`   [${d.isFeatured ? 'FEATURED' : '       '}] ${d.name} (${d.country}) — $${d.price} — ${d.category} — _id: ${d._id}`));
+  inserted.forEach((d) => console.log(`   [${d.isFeatured ? 'FEATURED' : '       '}] ${d.name} (${d.country}) — $${d.price} — ${d.category} — id: ${d.id}`));
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   console.log('✅ Done');
 }
 
-seed().catch((err) => {
+seed().catch(async (err) => {
   console.error('❌ Seed failed:', err.message);
+  await prisma.$disconnect();
   process.exit(1);
 });

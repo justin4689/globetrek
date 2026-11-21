@@ -1,30 +1,39 @@
-const Destination = require('../models/Destination');
+const { prisma } = require('../config/db');
+const serialize = require('../utils/serialize');
+
+const CATEGORIES = ['Beach', 'Mountain', 'Lake', 'Desert', 'Forest', 'City'];
 
 // ─── GET /destinations ─────────────────────────────────────────────────────────
 // Query params: category, search, featured, page, limit
 
 const getDestinations = async (req, res) => {
   try {
-    const { category, search, featured, page = 1, limit = 20 } = req.query;
+    const { category, search, featured } = req.query;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
 
-    const filter = {};
-    if (category) filter.category = category;
-    if (featured === 'true') filter.isFeatured = true;
-    if (search) filter.name = { $regex: search, $options: 'i' };
-
-    const skip = (Number(page) - 1) * Number(limit);
+    const where = {};
+    if (category) {
+      if (!CATEGORIES.includes(category)) {
+        return res.status(200).json({ success: true, total: 0, page, pages: 0, destinations: [] });
+      }
+      where.category = category;
+    }
+    if (featured === 'true') where.isFeatured = true;
+    // MySQL default collation is case-insensitive, like the former $regex 'i'
+    if (search) where.name = { contains: String(search) };
 
     const [destinations, total] = await Promise.all([
-      Destination.find(filter).skip(skip).limit(Number(limit)).select('-reviews'),
-      Destination.countDocuments(filter),
+      prisma.destination.findMany({ where, skip: (page - 1) * limit, take: limit }),
+      prisma.destination.count({ where }),
     ]);
 
     res.status(200).json({
       success: true,
       total,
-      page: Number(page),
-      pages: Math.ceil(total / Number(limit)),
-      destinations,
+      page,
+      pages: Math.ceil(total / limit),
+      destinations: serialize(destinations),
     });
   } catch (error) {
     console.error('getDestinations error:', error);
@@ -36,11 +45,14 @@ const getDestinations = async (req, res) => {
 
 const getDestinationById = async (req, res) => {
   try {
-    const destination = await Destination.findById(req.params.id);
+    const destination = await prisma.destination.findUnique({
+      where: { id: req.params.id },
+      include: { reviews: true },
+    });
     if (!destination) {
       return res.status(404).json({ success: false, message: 'Destination not found' });
     }
-    res.status(200).json({ success: true, destination });
+    res.status(200).json({ success: true, destination: serialize(destination) });
   } catch (error) {
     console.error('getDestinationById error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

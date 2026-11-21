@@ -1,5 +1,21 @@
-const Reservation = require('../models/Reservation');
-const Destination = require('../models/Destination');
+const { prisma } = require('../config/db');
+const serialize = require('../utils/serialize');
+
+const STATUSES = ['upcoming', 'completed', 'cancelled'];
+const destinationSummary = { select: { id: true, name: true, country: true, images: true } };
+
+// GTK-<year><4-digit sequence>, unique per year. Retries on the (rare) collision.
+const generateBookingRef = async (tx) => {
+  const year = new Date().getFullYear();
+  const prefix = `GTK-${year}`;
+  const last = await tx.reservation.findFirst({
+    where: { bookingRef: { startsWith: prefix } },
+    orderBy: { bookingRef: 'desc' },
+    select: { bookingRef: true },
+  });
+  const next = last ? parseInt(last.bookingRef.slice(prefix.length), 10) + 1 : 1;
+  return `${prefix}${String(next).padStart(4, '0')}`;
+};
 
 // ─── GET /reservations ─────────────────────────────────────────────────────────
 // Query param: status (upcoming | completed | cancelled)
@@ -7,14 +23,21 @@ const Destination = require('../models/Destination');
 const getReservations = async (req, res) => {
   try {
     const { status } = req.query;
-    const filter = { user: req.user.id };
-    if (status) filter.status = status;
+    const where = { userId: req.user.id };
+    if (status) {
+      if (!STATUSES.includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+      where.status = status;
+    }
 
-    const reservations = await Reservation.find(filter)
-      .populate('destination', 'name country images')
-      .sort({ createdAt: -1 });
+    const reservations = await prisma.reservation.findMany({
+      where,
+      include: { destination: destinationSummary },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    res.status(200).json({ success: true, reservations });
+    res.status(200).json({ success: true, reservations: serialize(reservations) });
   } catch (error) {
     console.error('getReservations error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -25,16 +48,16 @@ const getReservations = async (req, res) => {
 
 const getReservationById = async (req, res) => {
   try {
-    const reservation = await Reservation.findOne({
-      _id: req.params.id,
-      user: req.user.id,
-    }).populate('destination');
+    const reservation = await prisma.reservation.findFirst({
+      where: { id: req.params.id, userId: req.user.id },
+      include: { destination: { include: { reviews: true } } },
+    });
 
     if (!reservation) {
       return res.status(404).json({ success: false, message: 'Reservation not found' });
     }
 
-    res.status(200).json({ success: true, reservation });
+    res.status(200).json({ success: true, reservation: serialize(reservation) });
   } catch (error) {
     console.error('getReservationById error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -51,35 +74,54 @@ const createReservation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'destinationId, checkIn, checkOut and guests are required' });
     }
 
-    const destination = await Destination.findById(destinationId);
-    if (!destination) {
-      return res.status(404).json({ success: false, message: 'Destination not found' });
+    const guestCount = Number(guests);
+    if (!Number.isInteger(guestCount) || guestCount < 1) {
+      return res.status(400).json({ success: false, message: 'guests must be a positive integer' });
     }
 
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
-    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+    if (Number.isNaN(checkInDate.getTime()) || Number.isNaN(checkOutDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Invalid checkIn or checkOut date' });
+    }
 
+    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
     if (nights <= 0) {
       return res.status(400).json({ success: false, message: 'checkOut must be after checkIn' });
     }
 
-    const price = destination.price * nights * Number(guests);
+    const destination = await prisma.destination.findUnique({ where: { id: String(destinationId) } });
+    if (!destination) {
+      return res.status(404).json({ success: false, message: 'Destination not found' });
+    }
 
-    const reservation = await Reservation.create({
-      user: req.user.id,
-      destination: destinationId,
-      destinationName: destination.name,
-      country: destination.country,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
-      guests: Number(guests),
-      price,
-    });
+    const price = destination.price * nights * guestCount;
 
-    await reservation.populate('destination', 'name country images');
+    let reservation;
+    for (let attempt = 0; attempt < 3 && !reservation; attempt++) {
+      try {
+        reservation = await prisma.$transaction(async (tx) =>
+          tx.reservation.create({
+            data: {
+              userId: req.user.id,
+              destinationId: destination.id,
+              destinationName: destination.name,
+              country: destination.country,
+              checkIn: checkInDate,
+              checkOut: checkOutDate,
+              guests: guestCount,
+              price,
+              bookingRef: await generateBookingRef(tx),
+            },
+            include: { destination: destinationSummary },
+          })
+        );
+      } catch (err) {
+        if (err.code !== 'P2002' || attempt === 2) throw err;
+      }
+    }
 
-    res.status(201).json({ success: true, reservation });
+    res.status(201).json({ success: true, reservation: serialize(reservation) });
   } catch (error) {
     console.error('createReservation error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -90,7 +132,9 @@ const createReservation = async (req, res) => {
 
 const cancelReservation = async (req, res) => {
   try {
-    const reservation = await Reservation.findOne({ _id: req.params.id, user: req.user.id });
+    const reservation = await prisma.reservation.findFirst({
+      where: { id: req.params.id, userId: req.user.id },
+    });
 
     if (!reservation) {
       return res.status(404).json({ success: false, message: 'Reservation not found' });
@@ -100,10 +144,12 @@ const cancelReservation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Only upcoming reservations can be cancelled' });
     }
 
-    reservation.status = 'cancelled';
-    await reservation.save();
+    const updated = await prisma.reservation.update({
+      where: { id: reservation.id },
+      data: { status: 'cancelled' },
+    });
 
-    res.status(200).json({ success: true, reservation });
+    res.status(200).json({ success: true, reservation: serialize(updated) });
   } catch (error) {
     console.error('cancelReservation error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

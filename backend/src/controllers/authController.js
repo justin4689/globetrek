@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const User = require('../models/User');
+const { prisma } = require('../config/db');
+const serialize = require('../utils/serialize');
 const sendEmail = require('../services/email.service');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -19,20 +19,49 @@ const generateRefreshToken = (userId) =>
 const generateOtp = () =>
   Math.floor(10000 + Math.random() * 90000).toString(); // 5 digits
 
+const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
+// Stores a fresh hashed OTP (10 min) on the user and returns the plain code
+const issueOtp = async (userId) => {
+  const otp = generateOtp();
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      otp: await bcrypt.hash(otp, 8),
+      otpExpiry: new Date(Date.now() + 10 * 60 * 1000),
+    },
+  });
+  return otp;
+};
+
+const sendVerificationEmail = async (user, otp) => {
+  try {
+    await sendEmail(
+      user.email,
+      'GlobeTrek — Verify your account',
+      `Hello ${user.firstName},\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nThe GlobeTrek Team`
+    );
+  } catch (emailError) {
+    console.error('Failed to send verification email:', emailError.message);
+  }
+};
+
 const sendTokens = async (user, res, statusCode = 200) => {
-  const accessToken = generateAccessToken(user._id);
-  const refreshToken = generateRefreshToken(user._id);
+  const accessToken = generateAccessToken(user.id);
+  const refreshToken = generateRefreshToken(user.id);
 
   // Persist hashed refresh token
-  user.refreshToken = await bcrypt.hash(refreshToken, 8);
-  await user.save({ validateBeforeSave: false });
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken: await bcrypt.hash(refreshToken, 8) },
+  });
 
   res.status(statusCode).json({
     success: true,
     accessToken,
     refreshToken,
     user: {
-      id: user._id,
+      id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -58,7 +87,15 @@ const register = async (req, res) => {
       });
     }
 
-    const existing = await User.findOne({ email });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email' });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return res.status(409).json({
         success: false,
@@ -66,24 +103,17 @@ const register = async (req, res) => {
       });
     }
 
-    const user = await User.create({ firstName, lastName, email, password });
+    const user = await prisma.user.create({
+      data: {
+        firstName: String(firstName).trim(),
+        lastName: String(lastName).trim(),
+        email: normalizedEmail,
+        password: await bcrypt.hash(password, 12),
+      },
+    });
 
-    // Generate OTP for email verification
-    const otp = generateOtp();
-    user.otp = await bcrypt.hash(otp, 8);
-    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-    await user.save({ validateBeforeSave: false });
-
-    // Send OTP by email
-    try {
-      await sendEmail(
-        user.email,
-        'GlobeTrek — Verify your account',
-        `Hello ${user.firstName},\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nThe GlobeTrek Team`
-      );
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError.message);
-    }
+    const otp = await issueOtp(user.id);
+    await sendVerificationEmail(user, otp);
 
     return res.status(201).json({
       success: true,
@@ -91,6 +121,9 @@ const register = async (req, res) => {
       email: user.email,
     });
   } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'An account with this email already exists' });
+    }
     console.error('Register error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
   }
@@ -109,7 +142,10 @@ const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await prisma.user.findUnique({
+      where: { email: String(email).trim().toLowerCase() },
+      omit: { password: false },
+    });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -117,7 +153,7 @@ const login = async (req, res) => {
       });
     }
 
-    const isMatch = await user.comparePassword(password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -126,20 +162,8 @@ const login = async (req, res) => {
     }
 
     if (!user.isEmailVerified) {
-      const otp = generateOtp();
-      user.otp = await bcrypt.hash(otp, 8);
-      user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-      await user.save({ validateBeforeSave: false });
-
-      try {
-        await sendEmail(
-          user.email,
-          'GlobeTrek — Verify your account',
-          `Hello ${user.firstName},\n\nYour verification code is: ${otp}\n\nThis code expires in 10 minutes.\n\nThe GlobeTrek Team`
-        );
-      } catch (emailError) {
-        console.error('Failed to send verification email:', emailError.message);
-      }
+      const otp = await issueOtp(user.id);
+      await sendVerificationEmail(user, otp);
 
       return res.status(403).json({
         success: false,
@@ -169,7 +193,7 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email: String(email).trim().toLowerCase() } });
     // Always respond success to avoid email enumeration
     if (!user) {
       return res.status(200).json({
@@ -178,12 +202,8 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    const otp = generateOtp();
-    user.otp = await bcrypt.hash(otp, 8);
-    user.otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-    await user.save({ validateBeforeSave: false });
+    const otp = await issueOtp(user.id);
 
-    // Send OTP by email
     try {
       await sendEmail(
         user.email,
@@ -217,7 +237,10 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email }).select('+otp +otpExpiry');
+    const user = await prisma.user.findUnique({
+      where: { email: String(email).trim().toLowerCase() },
+      omit: { otp: false, otpExpiry: false },
+    });
     if (!user || !user.otp) {
       return res.status(400).json({
         success: false,
@@ -232,7 +255,7 @@ const verifyOtp = async (req, res) => {
       });
     }
 
-    const isMatch = await user.compareOtp(otp);
+    const isMatch = await bcrypt.compare(String(otp), user.otp);
     if (!isMatch) {
       return res.status(400).json({
         success: false,
@@ -241,19 +264,19 @@ const verifyOtp = async (req, res) => {
     }
 
     // Mark OTP as used
-    user.otp = undefined;
-    user.otpExpiry = undefined;
-    user.isEmailVerified = true;
-    await user.save({ validateBeforeSave: false });
+    const verifiedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: { otp: null, otpExpiry: null, isEmailVerified: true },
+    });
 
     // Registration flow: log the user in directly
     if (purpose === 'register') {
-      return sendTokens(user, res);
+      return sendTokens(verifiedUser, res);
     }
 
     // Password reset flow: return a short-lived reset token
     const resetToken = jwt.sign(
-      { id: user._id, purpose: 'reset' },
+      { id: user.id, purpose: 'reset' },
       process.env.JWT_SECRET,
       { expiresIn: '15m' }
     );
@@ -282,6 +305,10 @@ const resetPassword = async (req, res) => {
       });
     }
 
+    if (String(password).length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
     let decoded;
     try {
       decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
@@ -299,13 +326,15 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findById(decoded.id);
+    const user = await prisma.user.findUnique({ where: { id: decoded.id } });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    user.password = password;
-    await user.save();
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: await bcrypt.hash(password, 12) },
+    });
 
     res.status(200).json({
       success: true,
@@ -340,7 +369,10 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    const user = await User.findById(decoded.id).select('+refreshToken');
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      omit: { refreshToken: false },
+    });
     if (!user || !user.refreshToken) {
       return res.status(401).json({
         success: false,
@@ -356,11 +388,13 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    const newAccessToken = generateAccessToken(user._id);
-    const newRefreshToken = generateRefreshToken(user._id);
+    const newAccessToken = generateAccessToken(user.id);
+    const newRefreshToken = generateRefreshToken(user.id);
 
-    user.refreshToken = await bcrypt.hash(newRefreshToken, 8);
-    await user.save({ validateBeforeSave: false });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: await bcrypt.hash(newRefreshToken, 8) },
+    });
 
     res.status(200).json({
       success: true,
@@ -377,11 +411,10 @@ const refreshToken = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (user) {
-      user.refreshToken = undefined;
-      await user.save({ validateBeforeSave: false });
-    }
+    await prisma.user.updateMany({
+      where: { id: req.user.id },
+      data: { refreshToken: null },
+    });
 
     res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (error) {
@@ -394,8 +427,8 @@ const logout = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
-    res.status(200).json({ success: true, user });
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    res.status(200).json({ success: true, user: serialize(user) });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ success: false, message: 'Server error' });

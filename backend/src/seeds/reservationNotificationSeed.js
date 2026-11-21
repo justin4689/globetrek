@@ -1,39 +1,34 @@
 const dotenv = require('dotenv');
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
-const mongoose = require('mongoose');
-const User = require('../models/User');
-const Destination = require('../models/Destination');
-const Reservation = require('../models/Reservation');
-const Notification = require('../models/Notification');
-const Favorite = require('../models/Favorite');
+const { prisma } = require('../config/db');
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('✅ Connected to MongoDB');
+  await prisma.$connect();
+  console.log('✅ Connected to MySQL');
 
-  const user = await User.findOne({ email: 'justin@globetrek.com' });
-  if (!user) throw new Error('User not found — run userSeed.js first');
+  const user = await prisma.user.findUnique({ where: { email: 'justin@globetrek.com' } });
+  if (!user) throw new Error('User not found — run user.seed.js first');
 
   // Fetch destinations by name
   const byName = {};
-  const dests = await Destination.find({});
+  const dests = await prisma.destination.findMany();
   dests.forEach((d) => { byName[d.name] = d; });
 
   // ─── Favorites ──────────────────────────────────────────────────────────────
-  await Favorite.deleteMany({ user: user._id });
+  await prisma.favorite.deleteMany({ where: { userId: user.id } });
   const favDests = ['Seychelles', 'Paris', 'Machu Picchu', 'Whitehaven Beach'];
-  const favorites = await Favorite.insertMany(
-    favDests.filter((n) => byName[n]).map((n) => ({ user: user._id, destination: byName[n]._id }))
-  );
-  console.log(`✅ ${favorites.length} favorites seeded`);
+  const favorites = await prisma.favorite.createMany({
+    data: favDests.filter((n) => byName[n]).map((n) => ({ userId: user.id, destinationId: byName[n].id })),
+  });
+  console.log(`✅ ${favorites.count} favorites seeded`);
 
   // ─── Reservations ───────────────────────────────────────────────────────────
-  await Reservation.deleteMany({ user: user._id });
+  await prisma.reservation.deleteMany({ where: { userId: user.id } });
 
   const reservationsData = [
     {
-      destination: byName['Copacabana']?._id,
+      destinationId: byName['Copacabana']?.id,
       destinationName: 'Copacabana',
       country: 'Brazil',
       checkIn: new Date('2026-06-15'),
@@ -44,7 +39,7 @@ async function seed() {
       bookingRef: 'GTK-20260001',
     },
     {
-      destination: byName['Seychelles']?._id,
+      destinationId: byName['Seychelles']?.id,
       destinationName: 'Seychelles',
       country: 'Seychelles',
       checkIn: new Date('2026-08-10'),
@@ -55,7 +50,7 @@ async function seed() {
       bookingRef: 'GTK-20260002',
     },
     {
-      destination: byName['Whitehaven Beach']?._id,
+      destinationId: byName['Whitehaven Beach']?.id,
       destinationName: 'Whitehaven Beach',
       country: 'Australia',
       checkIn: new Date('2025-12-20'),
@@ -66,7 +61,7 @@ async function seed() {
       bookingRef: 'GTK-20250003',
     },
     {
-      destination: byName['Grace Bay Beach']?._id,
+      destinationId: byName['Grace Bay Beach']?.id,
       destinationName: 'Grace Bay Beach',
       country: 'Turks & Caicos',
       checkIn: new Date('2025-10-05'),
@@ -78,14 +73,18 @@ async function seed() {
     },
   ];
 
-  const reservations = await Reservation.insertMany(
-    reservationsData.map((r) => ({ ...r, user: user._id }))
-  );
+  const missing = reservationsData.filter((r) => !r.destinationId).map((r) => r.destinationName);
+  if (missing.length) throw new Error(`Destinations not found: ${missing.join(', ')} — run destinationSeed.js first`);
+
+  await prisma.reservation.createMany({
+    data: reservationsData.map((r) => ({ ...r, userId: user.id })),
+  });
+  const reservations = await prisma.reservation.findMany({ where: { userId: user.id }, orderBy: { bookingRef: 'asc' } });
   console.log(`✅ ${reservations.length} reservations seeded:`);
   reservations.forEach((r) => console.log(`   [${r.status}] ${r.destinationName} — ${r.bookingRef}`));
 
   // ─── Notifications ──────────────────────────────────────────────────────────
-  await Notification.deleteMany({ user: user._id });
+  await prisma.notification.deleteMany({ where: { userId: user.id } });
 
   const notificationsData = [
     {
@@ -138,12 +137,12 @@ async function seed() {
     },
   ];
 
-  const notifications = await Notification.insertMany(
-    notificationsData.map((n) => ({ ...n, user: user._id }))
-  );
-  console.log(`✅ ${notifications.length} notifications seeded`);
+  const notifications = await prisma.notification.createMany({
+    data: notificationsData.map((n) => ({ ...n, userId: user.id })),
+  });
+  console.log(`✅ ${notifications.count} notifications seeded`);
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   console.log('✅ Done');
 }
 

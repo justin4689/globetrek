@@ -1,8 +1,8 @@
 const dotenv = require('dotenv');
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
-const mongoose = require('mongoose');
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const { prisma } = require('../config/db');
 
 const seedUser = {
   firstName: 'Justin',
@@ -16,22 +16,25 @@ const seedUser = {
 };
 
 async function seed() {
-  await mongoose.connect(process.env.MONGODB_URI);
-  console.log('✅ Connected to MongoDB');
+  await prisma.$connect();
+  console.log('✅ Connected to MySQL');
 
-  await User.deleteOne({ email: seedUser.email });
-  const user = await User.create(seedUser);
+  await prisma.user.deleteMany({ where: { email: seedUser.email } });
+  const user = await prisma.user.create({
+    data: { ...seedUser, password: await bcrypt.hash(seedUser.password, 12) },
+  });
 
   console.log('✅ User seeded:');
   console.log(`   Email    : ${user.email}`);
   console.log(`   Password : password123`);
-  console.log(`   ID       : ${user._id}`);
+  console.log(`   ID       : ${user.id}`);
 
-  await mongoose.disconnect();
+  await prisma.$disconnect();
   console.log('✅ Done');
 }
 
-seed().catch((err) => {
+seed().catch(async (err) => {
   console.error('❌ Seed failed:', err.message);
+  await prisma.$disconnect();
   process.exit(1);
 });

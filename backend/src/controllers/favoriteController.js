@@ -1,14 +1,22 @@
-const Favorite = require('../models/Favorite');
+const { prisma } = require('../config/db');
+const serialize = require('../utils/serialize');
+
+const destinationFields = {
+  id: true, name: true, country: true, price: true, rating: true,
+  images: true, isFeatured: true, category: true,
+};
 
 // ─── GET /favorites ────────────────────────────────────────────────────────────
 
 const getFavorites = async (req, res) => {
   try {
-    const favorites = await Favorite.find({ user: req.user.id })
-      .populate('destination', 'name country price rating images isFeatured category')
-      .sort({ createdAt: -1 });
+    const favorites = await prisma.favorite.findMany({
+      where: { userId: req.user.id },
+      include: { destination: { select: destinationFields } },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    res.status(200).json({ success: true, favorites });
+    res.status(200).json({ success: true, favorites: serialize(favorites) });
   } catch (error) {
     console.error('getFavorites error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -25,13 +33,18 @@ const addFavorite = async (req, res) => {
       return res.status(400).json({ success: false, message: 'destinationId is required' });
     }
 
-    const favorite = await Favorite.create({ user: req.user.id, destination: destinationId });
-    await favorite.populate('destination', 'name country price rating images category');
+    const favorite = await prisma.favorite.create({
+      data: { userId: req.user.id, destinationId: String(destinationId) },
+      include: { destination: { select: destinationFields } },
+    });
 
-    res.status(201).json({ success: true, favorite });
+    res.status(201).json({ success: true, favorite: serialize(favorite) });
   } catch (error) {
-    if (error.code === 11000) {
+    if (error.code === 'P2002') {
       return res.status(409).json({ success: false, message: 'Already in favorites' });
+    }
+    if (error.code === 'P2003') {
+      return res.status(404).json({ success: false, message: 'Destination not found' });
     }
     console.error('addFavorite error:', error);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -42,12 +55,11 @@ const addFavorite = async (req, res) => {
 
 const removeFavorite = async (req, res) => {
   try {
-    const result = await Favorite.findOneAndDelete({
-      user: req.user.id,
-      destination: req.params.destinationId,
+    const result = await prisma.favorite.deleteMany({
+      where: { userId: req.user.id, destinationId: req.params.destinationId },
     });
 
-    if (!result) {
+    if (result.count === 0) {
       return res.status(404).json({ success: false, message: 'Favorite not found' });
     }
 

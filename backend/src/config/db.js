@@ -1,13 +1,21 @@
-const mongoose = require('mongoose');
+const { PrismaClient } = require('@prisma/client');
+
+// Sensitive fields are hidden by default (equivalent of Mongoose `select: false`).
+// Re-enable them per query with `omit: { password: false }`.
+const prisma = new PrismaClient({
+  omit: {
+    user: { password: true, otp: true, otpExpiry: true, refreshToken: true },
+  },
+});
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+    await prisma.$connect();
+    console.log('MySQL connected (Prisma)');
   } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
+    console.error(`MySQL connection error: ${error.message}`);
     process.exit(1);
   }
 };
 
-module.exports = connectDB;
+module.exports = { prisma, connectDB };

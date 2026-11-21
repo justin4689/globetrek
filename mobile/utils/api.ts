@@ -3,7 +3,7 @@ import { storage } from "./storage";
 const LOCAL_IP = "192.168.1.14";
 
 export const BASE_URL = __DEV__
-  ? `http://${LOCAL_IP}:5000/api`
+  ? `http://${LOCAL_IP}:5001/api`
   : "https://api.globetrek.com/api";
 
 type RequestOptions = RequestInit & { skipAuth?: boolean };
