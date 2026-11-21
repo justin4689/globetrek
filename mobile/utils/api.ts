@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 
-const LOCAL_IP = "192.168.1.14";
+const LOCAL_IP = "192.168.1.6";
 
 export const BASE_URL = __DEV__
   ? `http://${LOCAL_IP}:5001/api`

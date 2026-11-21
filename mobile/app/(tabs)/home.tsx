@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderRadius: 14,
     overflow: "hidden",
-    backgroundColor: "rgba(217, 217, 217, 0.07)",
+    backgroundColor: "#FCFCFC", // must be opaque: a translucent bg lets the Android elevation shadow show through
     marginBottom: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },

@@ -2,7 +2,7 @@ import { destinations } from "@/data/home";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
-import { useEffect, useRef, useState } from "react";
+import { ComponentRef, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -31,7 +31,7 @@ type Props = {
 export default function SearchModal({ visible, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
   const insets = useSafeAreaInsets();
 
   const results = query.trim()

@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   thumbOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "center",
     alignItems: "center",

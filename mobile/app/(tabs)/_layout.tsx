@@ -9,28 +9,28 @@ export default function TabLayout() {
         name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="reservations"
         options={{
           title: 'Reservations',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="calendar-outline" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="calendar-outline" color={color as string} />,
         }}
       />
         <Tabs.Screen
         name="favorites"
         options={{
           title: 'Favorites',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="heart-outline" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="heart-outline" color={color as string} />,
         }}
       />
         <Tabs.Screen
         name="profil"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color }) => <Ionicons size={28} name="person-outline" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons size={28} name="person-outline" color={color as string} />,
         }}
       />
     </Tabs>

@@ -2,7 +2,7 @@ import { Colors, Fonts } from "@/utils/constants";
 import { ActivityIndicator, Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View } from "react-native";
-import { useEffect, useRef, useState } from "react";
+import { ComponentRef, useEffect, useRef, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { KeyboardAvoidingView } from "react-native";
 import { useVerifyOtpMutation, useForgotPasswordMutation } from "@/hooks/mutations/useAuthMutations";
@@ -16,7 +16,7 @@ export default function VerifyOtp() {
 
   const [digits, setDigits] = useState(['', '', '', '', '']);
   const [seconds, setSeconds] = useState(180);
-  const refs = useRef<(TextInput | null)[]>([null, null, null, null, null]);
+  const refs = useRef<(ComponentRef<typeof TextInput> | null)[]>([null, null, null, null, null]);
 
   useEffect(() => {
     if (seconds <= 0) return;

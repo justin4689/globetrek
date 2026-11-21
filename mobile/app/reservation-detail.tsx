@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.25)",
   },
   backBtn: {
