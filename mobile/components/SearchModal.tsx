@@ -1,3 +1,4 @@
+import { DestinationGridSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useDestinations } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
@@ -9,7 +10,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { ComponentRef, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -173,8 +173,8 @@ export default function SearchModal({ visible, onClose }: Props) {
               ))}
             </View>
           ) : isSearching && results.length === 0 ? (
-            <View style={styles.emptyState}>
-              <ActivityIndicator color={Colors.primaryColor} />
+            <View style={styles.resultsList}>
+              <DestinationGridSkeleton count={2} />
             </View>
           ) : results.length === 0 ? (
             /* No results */

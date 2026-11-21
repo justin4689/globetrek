@@ -1,3 +1,4 @@
+import { ReservationListSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useReservations } from "@/hooks/queries/useReservationQueries";
 import type { ApiReservation } from "@/services/reservationService";
@@ -7,7 +8,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -68,7 +68,7 @@ function ReservationCard({ item }: { item: ApiReservation }) {
           <Text style={styles.price}>{formatPrice(item.price)}</Text>
           <View style={styles.guestsRow}>
             <Ionicons name="people-outline" size={14} color="#888" />
-            <Text style={styles.guestsText}>{item.guests} guests</Text>
+            <Text style={styles.guestsText}>{item.guests} {item.guests > 1 ? "guests" : "guest"}</Text>
           </View>
         </View>
       </View>
@@ -125,9 +125,7 @@ export default function Reservations() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           isPending ? (
-            <View style={styles.emptyState}>
-              <ActivityIndicator color={Colors.primaryColor} />
-            </View>
+            <ReservationListSkeleton count={2} />
           ) : isError ? (
             <TouchableOpacity style={styles.emptyState} onPress={() => refetch()}>
               <Ionicons name="cloud-offline-outline" size={64} color="#E0E0E0" />

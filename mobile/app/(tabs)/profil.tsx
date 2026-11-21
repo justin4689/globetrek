@@ -97,13 +97,7 @@ export default function Profil() {
               </View>
             )}
           </View>
-          <TouchableOpacity
-            style={styles.editButton}
-            activeOpacity={0.7}
-            onPress={() => router.push('/edit-profil')}
-          >
-            <Ionicons name="create-outline" size={20} color={Colors.textColor} />
-          </TouchableOpacity>
+        
         </View>
 
         {/* Account Section */}

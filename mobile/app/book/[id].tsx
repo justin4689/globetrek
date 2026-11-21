@@ -1,3 +1,4 @@
+import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
 import { reservationService } from "@/services/reservationService";
@@ -81,12 +82,18 @@ export default function Book() {
     }
   };
 
+  if (isPending) {
+    return (
+      <SafeAreaView style={styles.root}>
+        <DetailSkeleton heroHeight={0} />
+      </SafeAreaView>
+    );
+  }
+
   if (!destination) {
     return (
       <SafeAreaView style={[styles.root, styles.stateScreen]}>
-        {isPending ? (
-          <ActivityIndicator color={Colors.primaryColor} />
-        ) : (
+        {(
           <>
             <Text style={styles.stateText}>Could not load this destination.</Text>
             {isError && (

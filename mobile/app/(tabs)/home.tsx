@@ -1,3 +1,4 @@
+import { DestinationGridSkeleton, RecommendedSkeleton, Skeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import SearchModal from "@/components/SearchModal";
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +8,7 @@ import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQu
 import { useUnreadNotificationsCount } from "@/hooks/queries/useNotificationQueries";
 import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
+import { useQueryClient } from "@tanstack/react-query";
 import { summarize } from "@/utils/text";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
@@ -14,8 +16,8 @@ import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
+  RefreshControl,
   Image,
   ScrollView,
   StyleSheet,
@@ -34,11 +36,25 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchVisible, setSearchVisible] = useState(false);
 
-  const { data: categories = [] } = useCategories();
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data ?? [];
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull to refresh: reload everything the home screen shows
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all(
+      [["destinations"], ["categories"], ["favorites"], ["notifications"]].map((queryKey) =>
+        queryClient.refetchQueries({ queryKey, type: "active" })
+      )
+    );
+    setRefreshing(false);
+  };
   const { filters, activeCount: activeFilters, resetFilters } = useFilters();
   const destinationsQuery = useDestinations({ category: activeCategory, filters });
   const destinations = destinationsQuery.data ?? [];
-  const { data: recommended = [] } = useFeaturedDestinations();
+  const { data: recommended = [], isPending: recommendedPending } = useFeaturedDestinations();
   const { data: unreadCount = 0 } = useUnreadNotificationsCount();
   const favoriteIds = useFavoriteIds();
   const toggleFavorite = useToggleFavorite();
@@ -59,7 +75,18 @@ export default function Home() {
       />
 
       {/* The whole page scrolls, header included, so cards are never hidden under it */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.primaryColor]}
+            tintColor={Colors.primaryColor}
+          />
+        }
+      >
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -154,6 +181,8 @@ export default function Home() {
               All
             </Text>
           </TouchableOpacity>
+          {categoriesQuery.isPending &&
+            [96, 120, 88, 104].map((w, i) => <Skeleton key={i} width={w} height={42} radius={22} />)}
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat.id}
@@ -184,9 +213,7 @@ export default function Home() {
 
         {/* Destination cards grid */}
         {destinationsQuery.isPending ? (
-          <View style={styles.stateBox}>
-            <ActivityIndicator color={Colors.primaryColor} />
-          </View>
+          <DestinationGridSkeleton count={4} />
         ) : destinationsQuery.isError ? (
           <TouchableOpacity style={styles.stateBox} onPress={() => destinationsQuery.refetch()}>
             <Text style={styles.stateText}>Could not load destinations.</Text>
@@ -267,6 +294,12 @@ export default function Home() {
         </View>
 
         {/* Recommended */}
+        {recommendedPending && (
+          <>
+            <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Recommended</Text>
+            <RecommendedSkeleton count={3} />
+          </>
+        )}
         {recommended.length > 0 && (
           <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Recommended</Text>
         )}

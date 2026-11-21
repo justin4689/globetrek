@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { prisma } = require('../config/db');
@@ -7,8 +8,8 @@ const { createSession, rotateSession, endSession, endAllSessions } = require('..
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const generateOtp = () =>
-  Math.floor(10000 + Math.random() * 90000).toString(); // 5 digits
+// Cryptographically secure 5-digit code (Math.random is predictable)
+const generateOtp = () => crypto.randomInt(10000, 100000).toString();
 
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 

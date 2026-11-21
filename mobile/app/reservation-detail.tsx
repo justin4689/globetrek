@@ -1,3 +1,4 @@
+import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useCancelReservation, useReservation } from "@/hooks/queries/useReservationQueries";
 import type { ApiReservation } from "@/services/reservationService";
@@ -59,12 +60,12 @@ export default function ReservationDetail() {
   const { data: reservation, isPending, isError, refetch } = useReservation(id);
   const cancelReservation = useCancelReservation();
 
+  if (isPending) return <DetailSkeleton heroHeight={260} />;
+
   if (isPending || isError || !reservation) {
     return (
       <View style={[styles.root, styles.stateScreen]}>
-        {isPending ? (
-          <ActivityIndicator color={Colors.primaryColor} />
-        ) : (
+        {(
           <>
             <Text style={styles.stateText}>Could not load this reservation.</Text>
             <TouchableOpacity onPress={() => refetch()}>

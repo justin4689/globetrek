@@ -1,3 +1,4 @@
+import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
 import { useFavoriteIds, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
@@ -8,7 +9,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -86,12 +86,12 @@ export default function DestinationDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const reviewsRef = useRef<FlatList>(null);
 
+  if (isPending) return <DetailSkeleton heroHeight={HERO_HEIGHT} />;
+
   if (isPending || isError || !destination) {
     return (
       <View style={[styles.root, styles.stateScreen]}>
-        {isPending ? (
-          <ActivityIndicator color={Colors.primaryColor} />
-        ) : (
+        {(
           <>
             <Text style={styles.stateText}>Could not load this destination.</Text>
             <TouchableOpacity onPress={() => refetch()}>

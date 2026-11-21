@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import {
   useMarkNotificationAsRead,
@@ -8,7 +9,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -51,12 +51,21 @@ export default function NotificationDetail() {
     if (notif && !notif.isRead) markRead(notif._id);
   }, [notif, markRead]);
 
+  if (isPending) {
+    return (
+      <View style={[styles.root, { paddingTop: insets.top + 80, alignItems: "center", gap: 14, paddingHorizontal: 24 }]}>
+        <Skeleton width={130} height={130} radius={65} />
+        <Skeleton width="60%" height={22} />
+        <Skeleton width="85%" height={14} />
+        <Skeleton width="100%" height={90} radius={14} style={{ marginTop: 20 }} />
+      </View>
+    );
+  }
+
   if (!notif) {
     return (
       <View style={[styles.root, styles.stateScreen]}>
-        {isPending ? (
-          <ActivityIndicator color={Colors.primaryColor} />
-        ) : (
+        {(
           <>
             <Text style={styles.stateText}>
               {isError ? "Could not load this notification." : "This notification no longer exists."}

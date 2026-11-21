@@ -1,3 +1,4 @@
+import { DestinationGridSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useFavorites, useToggleFavorite } from "@/hooks/queries/useFavoriteQueries";
 import { imageSource } from "@/utils/api";
@@ -6,7 +7,6 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { BlurView } from "expo-blur";
 import { router } from "expo-router";
 import {
-  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -101,9 +101,7 @@ export default function Favorites() {
         )}
         ListEmptyComponent={
           isPending ? (
-            <View style={styles.emptyState}>
-              <ActivityIndicator color={Colors.primaryColor} />
-            </View>
+            <DestinationGridSkeleton count={4} />
           ) : isError ? (
             <TouchableOpacity style={styles.emptyState} onPress={() => refetch()}>
               <Ionicons name="cloud-offline-outline" size={64} color="#E0E0E0" />

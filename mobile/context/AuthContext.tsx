@@ -6,6 +6,7 @@ import { api, ApiError, onSessionExpired } from "@/utils/api";
 import { useQueryClient } from "@tanstack/react-query";
 
 const ONBOARDING_KEY = "hasBeenOnboarding";
+const USER_CACHE_KEY = "cachedUser";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -24,7 +25,16 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUserState] = useState<AuthUser | null>(null);
+
+  // Keep a local copy of the profile so the app can open offline with the saved session
+  const setUser = (next: AuthUser | null) => {
+    setUserState(next);
+    (next
+      ? AsyncStorage.setItem(USER_CACHE_KEY, JSON.stringify(next))
+      : AsyncStorage.removeItem(USER_CACHE_KEY)
+    ).catch(() => {});
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
@@ -43,8 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(user);
         }
       } catch (err) {
-        // Only a rejected session signs the user out; a network error keeps the saved session
-        if (err instanceof ApiError && err.status === 401) await storage.clearTokens();
+        if (err instanceof ApiError && err.status === 401) {
+          // The server rejected the session: sign out
+          await storage.clearTokens();
+          await AsyncStorage.removeItem(USER_CACHE_KEY).catch(() => {});
+        } else {
+          // Offline / server unreachable: open the app with the cached profile
+          const cached = await AsyncStorage.getItem(USER_CACHE_KEY).catch(() => null);
+          if (cached) setUserState(JSON.parse(cached));
+        }
       } finally {
         setIsLoading(false);
       }

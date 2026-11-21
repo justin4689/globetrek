@@ -1,3 +1,4 @@
+import { ListRowSkeleton } from "@/components/Skeleton";
 import {
   useMarkAllNotificationsAsRead,
   useNotifications,
@@ -145,9 +146,7 @@ export default function Notifications() {
       </View>
 
       {isPending ? (
-        <View style={styles.stateBox}>
-          <ActivityIndicator color={Colors.primaryColor} />
-        </View>
+        <ListRowSkeleton count={6} />
       ) : isError ? (
         <TouchableOpacity style={styles.stateBox} onPress={() => refetch()}>
           <Text style={styles.stateText}>Could not load notifications.</Text>

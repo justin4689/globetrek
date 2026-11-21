@@ -32,11 +32,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const response = await fetch(`${BASE_URL}${endpoint}`, { headers, ...rest });
   const data = await response.json();
 
-  // Access token expired → refresh once and replay the request; if that fails the session is over
+  // Access token expired → refresh (shared by all parallel requests) and replay once
   if (!response.ok && data?.code === "TOKEN_EXPIRED") {
-    const refreshed = await tryRefresh();
-    if (refreshed) return request<T>(endpoint, options);
-    await expireSession();
+    const outcome = await refreshTokens();
+    if (outcome === "refreshed") return request<T>(endpoint, options);
+    if (outcome === "expired") await expireSession();
+    // "offline": keep the saved session, the request just fails below
   }
 
   // Session closed on the server (logout elsewhere, password reset, revoked)
@@ -66,29 +67,39 @@ async function expireSession() {
   sessionExpiredHandler?.();
 }
 
-async function tryRefresh(): Promise<boolean> {
-  try {
-    const refreshToken = await storage.getRefreshToken();
-    if (!refreshToken) return false;
+type RefreshOutcome = "refreshed" | "expired" | "offline";
 
-    const res = await fetch(`${BASE_URL}/auth/refresh-token`, {
+// Single-flight: the API rotates refresh tokens and treats a reused one as stolen, so parallel
+// requests must share ONE refresh call instead of each sending the same token.
+let refreshInFlight: Promise<RefreshOutcome> | null = null;
+
+function refreshTokens(): Promise<RefreshOutcome> {
+  refreshInFlight ??= doRefresh().finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function doRefresh(): Promise<RefreshOutcome> {
+  const refreshToken = await storage.getRefreshToken();
+  if (!refreshToken) return "expired";
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/auth/refresh-token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refreshToken }),
     });
-
-    if (!res.ok) {
-      await storage.clearTokens();
-      return false;
-    }
-
-    const data = await res.json();
-    await storage.setTokens(data.accessToken, data.refreshToken);
-    return true;
   } catch {
-    await storage.clearTokens();
-    return false;
+    return "offline"; // network error: the session may still be valid
   }
+
+  if (!res.ok) return res.status === 401 ? "expired" : "offline";
+
+  const data = await res.json();
+  await storage.setTokens(data.accessToken, data.refreshToken);
+  return "refreshed";
 }
 
 export class ApiError extends Error {
