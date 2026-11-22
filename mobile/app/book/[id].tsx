@@ -2,7 +2,7 @@ import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
 import { reservationService } from "@/services/reservationService";
-import { imageSource } from "@/utils/api";
+import { ApiError, imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
@@ -36,6 +36,13 @@ const formatDate = (d: Date) =>
 const toApiDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
+/** The deposit went through but the API has not confirmed the booking yet. */
+class BookingNotConfirmedError extends Error {
+  constructor() {
+    super("Your deposit was paid. Tap “Confirm booking” to try again: you will not be charged twice.");
+  }
+}
+
 export default function Book() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
@@ -56,51 +63,61 @@ export default function Book() {
 
   // Pay the 30% deposit with Stripe's payment sheet; the API only creates the reservation once it is paid.
   // Resolves to null when the user closes the sheet without paying.
+  // A deposit already paid whose booking could not be confirmed yet: the next tap only confirms it,
+  // so the user is never charged twice
+  const [paidIntentId, setPaidIntentId] = useState<string | null>(null);
+
   const book = useMutation({
     mutationFn: async () => {
-      const payment = await reservationService.createPaymentIntent({
-        destinationId: id!,
-        checkIn: toApiDate(checkIn),
-        checkOut: toApiDate(checkOut),
-        guests,
-      });
+      let paymentIntentId = paidIntentId;
 
-      const init = await initPaymentSheet({
-        merchantDisplayName: "GlobeTrek",
-        paymentIntentClientSecret: payment.clientSecret,
-        returnURL: "globetrek://stripe-redirect",
-        appearance: { colors: { primary: Colors.primaryColor } },
-      });
-      if (init.error) throw new Error(init.error.message);
+      if (!paymentIntentId) {
+        const payment = await reservationService.createPaymentIntent({
+          destinationId: id!,
+          checkIn: toApiDate(checkIn),
+          checkOut: toApiDate(checkOut),
+          guests,
+        });
 
-      const { error } = await presentPaymentSheet();
-      if (error) {
-        if (error.code === PaymentSheetError.Canceled) return null;
-        throw new Error(error.message);
+        const init = await initPaymentSheet({
+          merchantDisplayName: "GlobeTrek",
+          paymentIntentClientSecret: payment.clientSecret,
+          returnURL: "globetrek://stripe-redirect",
+          appearance: { colors: { primary: Colors.primaryColor } },
+        });
+        if (init.error) throw new Error(init.error.message);
+
+        const { error } = await presentPaymentSheet();
+        if (error) {
+          if (error.code === PaymentSheetError.Canceled) return null;
+          throw new Error(error.message);
+        }
+        paymentIntentId = payment.paymentIntentId;
+        setPaidIntentId(paymentIntentId);
       }
 
-      // The deposit is paid: retry the confirmation a few times rather than lose the booking to a network blip
+      // The deposit is paid: retry network failures a few times; an API refusal (4xx) will not change
       for (let attempt = 1; ; attempt++) {
         try {
-          return (await reservationService.confirm(payment.paymentIntentId)).reservation;
+          return (await reservationService.confirm(paymentIntentId)).reservation;
         } catch (err) {
-          if (attempt === 3) {
-            throw new Error(
-              "Your deposit was paid but we could not confirm your booking yet. Check your reservations in a moment."
-            );
-          }
+          const refused = err instanceof ApiError && err.status >= 400 && err.status < 500;
+          if (refused || attempt === 3) throw new BookingNotConfirmedError();
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
         }
       }
     },
     onSuccess: (reservation) => {
       if (!reservation) return; // payment sheet closed: stay on this screen
+      setPaidIntentId(null);
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] }); // confirmation + payment notifications
       router.replace({ pathname: "/reservation-detail", params: { id: reservation._id } });
     },
     onError: (err) =>
-      Alert.alert("Payment failed", err instanceof Error ? err.message : "Please try again."),
+      err instanceof BookingNotConfirmedError
+        ? Alert.alert("Booking not confirmed yet", err.message)
+        : Alert.alert("Payment failed", err instanceof Error ? err.message : "Please try again."),
   });
 
   const onDateChange = (event: DateTimePickerEvent, date?: Date) => {
@@ -290,7 +307,9 @@ export default function Book() {
           {book.isPending ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.confirmText}>Pay deposit · {formatPrice(deposit)}</Text>
+            <Text style={styles.confirmText}>
+              {paidIntentId ? "Confirm booking" : `Pay deposit · ${formatPrice(deposit)}`}
+            </Text>
           )}
         </TouchableOpacity>
       </View>

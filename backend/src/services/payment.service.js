@@ -37,7 +37,16 @@ const createDepositIntent = async ({ userId, destinationId, checkIn, checkOut, g
 
 const getPaymentIntent = (paymentIntentId) => stripe.paymentIntents.retrieve(paymentIntentId);
 
-/** Refunds the whole deposit. */
-const refundDeposit = (paymentIntentId) => stripe.refunds.create({ payment_intent: paymentIntentId });
+/**
+ * Refunds the whole deposit. A deposit Stripe already refunded counts as done: an earlier attempt
+ * may have gone through even though its response was lost (timeout), and retrying must not fail forever.
+ */
+const refundDeposit = async (paymentIntentId) => {
+  try {
+    await stripe.refunds.create({ payment_intent: paymentIntentId });
+  } catch (err) {
+    if (err.code !== 'charge_already_refunded') throw err;
+  }
+};
 
 module.exports = { createDepositIntent, getPaymentIntent, refundDeposit };
