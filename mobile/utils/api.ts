@@ -1,10 +1,13 @@
 import { storage } from "./storage";
 
-const LOCAL_IP = "192.168.1.6";
+// Set in mobile/.env. In development, point it at your machine's LAN IP (not localhost:
+// on a phone or simulator, localhost is the device itself).
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+if (!API_URL) {
+  throw new Error("EXPO_PUBLIC_API_URL is missing: add it to mobile/.env (see .env.example)");
+}
 
-export const BASE_URL = __DEV__
-  ? `http://${LOCAL_IP}:5001/api`
-  : "https://api.globetrek.com/api";
+export const BASE_URL = API_URL.replace(/\/$/, "");
 
 export const API_ORIGIN = BASE_URL.replace(/\/api$/, "");
 
