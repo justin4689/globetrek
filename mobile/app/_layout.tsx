@@ -8,6 +8,13 @@ import { FiltersProvider } from "@/context/FiltersContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Colors } from "@/utils/constants";
+import { StripeProvider } from "@stripe/stripe-react-native";
+
+// Test-mode publishable key (pk_test_…), set in mobile/.env
+const STRIPE_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+if (!STRIPE_PUBLISHABLE_KEY) {
+  throw new Error("EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY is missing: add it to mobile/.env (see .env.example)");
+}
 
 const queryClient = new QueryClient();
 
@@ -82,8 +89,11 @@ export default function RootLayout() {
       <AuthProvider>
         <FiltersProvider>
           <SafeAreaProvider>
-            <StatusBar barStyle="dark-content" />
-            <RootNavigator />
+            {/* urlScheme brings the user back to the app after a 3D Secure check in the browser */}
+            <StripeProvider publishableKey={STRIPE_PUBLISHABLE_KEY} urlScheme="globetrek">
+              <StatusBar barStyle="dark-content" />
+              <RootNavigator />
+            </StripeProvider>
           </SafeAreaProvider>
         </FiltersProvider>
       </AuthProvider>

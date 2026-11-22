@@ -6,7 +6,9 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is missing: add your sk_test_ key to backend/.env');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Fail fast on a stuck connection and retry instead of hanging the app for the default 80 s.
+// Retries are safe: the SDK sends an idempotency key, so a retried call never charges twice.
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { timeout: 20000, maxNetworkRetries: 2 });
 
 /**
  * Creates the PaymentIntent for a booking's deposit. The booking itself travels in the metadata:
@@ -17,7 +19,9 @@ const createDepositIntent = async ({ userId, destinationId, checkIn, checkOut, g
   const intent = await stripe.paymentIntents.create({
     amount: depositCents,
     currency: 'usd',
-    automatic_payment_methods: { enabled: true },
+    // Methods are managed in the Stripe dashboard; refusing redirects keeps the sheet to cards
+    // (and Link) and drops app-switching wallets such as Cash App or Amazon Pay
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
     description: 'GlobeTrek booking deposit (30%)',
     metadata: {
       userId,

@@ -6,6 +6,8 @@ import { imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import { DEPOSIT_PERCENT, splitDeposit } from "@/utils/deposit";
+import { PaymentSheetError, useStripe } from "@stripe/stripe-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -38,6 +40,7 @@ export default function Book() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const { data: destination, isPending, isError, refetch } = useDestination(id);
 
   const today = startOfDay(new Date());
@@ -49,21 +52,55 @@ export default function Book() {
   const nights = nightsBetween(checkIn, checkOut);
   const total = destination ? destination.price * nights * guests : 0;
 
+  const { deposit, balance } = splitDeposit(total);
+
+  // Pay the 30% deposit with Stripe's payment sheet; the API only creates the reservation once it is paid.
+  // Resolves to null when the user closes the sheet without paying.
   const book = useMutation({
-    mutationFn: () =>
-      reservationService.create({
+    mutationFn: async () => {
+      const payment = await reservationService.createPaymentIntent({
         destinationId: id!,
         checkIn: toApiDate(checkIn),
         checkOut: toApiDate(checkOut),
         guests,
-      }),
-    onSuccess: ({ reservation }) => {
+      });
+
+      const init = await initPaymentSheet({
+        merchantDisplayName: "GlobeTrek",
+        paymentIntentClientSecret: payment.clientSecret,
+        returnURL: "globetrek://stripe-redirect",
+        appearance: { colors: { primary: Colors.primaryColor } },
+      });
+      if (init.error) throw new Error(init.error.message);
+
+      const { error } = await presentPaymentSheet();
+      if (error) {
+        if (error.code === PaymentSheetError.Canceled) return null;
+        throw new Error(error.message);
+      }
+
+      // The deposit is paid: retry the confirmation a few times rather than lose the booking to a network blip
+      for (let attempt = 1; ; attempt++) {
+        try {
+          return (await reservationService.confirm(payment.paymentIntentId)).reservation;
+        } catch (err) {
+          if (attempt === 3) {
+            throw new Error(
+              "Your deposit was paid but we could not confirm your booking yet. Check your reservations in a moment."
+            );
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        }
+      }
+    },
+    onSuccess: (reservation) => {
+      if (!reservation) return; // payment sheet closed: stay on this screen
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] }); // a confirmation notification was created
+      queryClient.invalidateQueries({ queryKey: ["notifications"] }); // confirmation + payment notifications
       router.replace({ pathname: "/reservation-detail", params: { id: reservation._id } });
     },
     onError: (err) =>
-      Alert.alert("Booking failed", err instanceof Error ? err.message : "Please try again."),
+      Alert.alert("Payment failed", err instanceof Error ? err.message : "Please try again."),
   });
 
   const onDateChange = (event: DateTimePickerEvent, date?: Date) => {
@@ -224,9 +261,21 @@ export default function Book() {
           <View style={styles.divider} />
           <View style={styles.priceRow}>
             <Text style={[styles.priceLabel, styles.totalLabel]}>Total</Text>
-            <Text style={[styles.priceValue, styles.totalValue]}>{formatPrice(total)}</Text>
+            <Text style={[styles.priceValue, styles.totalLabel]}>{formatPrice(total)}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.priceRow}>
+            <Text style={[styles.priceLabel, styles.totalLabel]}>Deposit due now ({DEPOSIT_PERCENT}%)</Text>
+            <Text style={[styles.priceValue, styles.totalValue]}>{formatPrice(deposit)}</Text>
+          </View>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Pay at the property ({100 - DEPOSIT_PERCENT}%)</Text>
+            <Text style={styles.priceValue}>{formatPrice(balance)}</Text>
           </View>
         </View>
+        <Text style={styles.policyText}>
+          Free cancellation up to 48 hours before check-in: your deposit is refunded in full.
+        </Text>
       </ScrollView>
 
       {/* Confirm */}
@@ -241,7 +290,7 @@ export default function Book() {
           {book.isPending ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.confirmText}>Confirm booking · {formatPrice(total)}</Text>
+            <Text style={styles.confirmText}>Pay deposit · {formatPrice(deposit)}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -322,6 +371,7 @@ const styles = StyleSheet.create({
   priceValue: { fontFamily: Fonts.medium, fontSize: 14, color: Colors.textColor },
   totalLabel: { fontFamily: Fonts.bold, color: Colors.textColor, fontSize: 16 },
   totalValue: { fontFamily: Fonts.bold, color: Colors.primaryColor, fontSize: 18 },
+  policyText: { fontFamily: Fonts.regular, fontSize: 13, color: "#777", marginTop: 10, lineHeight: 18 },
 
   bottomBar: {
     paddingHorizontal: 20,
