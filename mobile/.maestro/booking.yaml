@@ -31,20 +31,43 @@ tags:
 - assertVisible: "2 guests"
 - assertVisible: ".*× 3 nights × 2 guests"
 
+# The 30% deposit is shown before paying
+- assertVisible: "Deposit due now.*"
 - tapOn:
     id: "book-confirm"
+
+# Pay the deposit with Stripe's test card in the payment sheet
+- extendedWaitUntil:
+    visible: "Card information"
+    timeout: 60000
+- tapOn:
+    below: "Card information"
+- inputText: "4242424242424242"
+- inputText: "1234" # expiry 12/34
+- inputText: "123" # CVC
+- runFlow:
+    when:
+      visible: "ZIP.*"
+    commands:
+      - tapOn: "ZIP.*"
+      - inputText: "12345"
+- tapOn: "Pay .*"
 
 # The new reservation opens on its detail screen
 - extendedWaitUntil:
     visible: "Booking reference"
-    timeout: 20000
+    timeout: 60000
 - assertVisible: "Upcoming"
 - assertVisible: "Grace Bay Beach"
 - assertVisible: "2 guests"
+- scrollUntilVisible:
+    element: "Deposit paid.*"
+    direction: DOWN
 
-# Cancel it
+# Cancel it: the default check-in is tomorrow, less than 48 h away, so the deposit is kept
 - tapOn:
     id: "reservation-cancel"
+- assertVisible: ".*non-refundable.*"
 - tapOn: "Cancel booking"
 - extendedWaitUntil:
     visible: "per night · per guest" # back on the destination detail
