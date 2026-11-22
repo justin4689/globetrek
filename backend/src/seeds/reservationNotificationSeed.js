@@ -2,6 +2,7 @@ const dotenv = require('dotenv');
 dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
 const { prisma } = require('../config/db');
+const { splitDeposit } = require('../utils/deposit');
 
 async function seed() {
   await prisma.$connect();
@@ -77,7 +78,10 @@ async function seed() {
   if (missing.length) throw new Error(`Destinations not found: ${missing.join(', ')} — run destinationSeed.js first`);
 
   await prisma.reservation.createMany({
-    data: reservationsData.map((r) => ({ ...r, userId: user.id })),
+    data: reservationsData.map((r) => {
+      const { deposit, balance } = splitDeposit(r.price);
+      return { ...r, userId: user.id, depositAmount: deposit, balanceDue: balance, paymentStatus: 'deposit_paid' };
+    }),
   });
   const reservations = await prisma.reservation.findMany({ where: { userId: user.id }, orderBy: { bookingRef: 'asc' } });
   console.log(`✅ ${reservations.length} reservations seeded:`);

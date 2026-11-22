@@ -22,6 +22,12 @@ enum ReservationStatus {
   cancelled
 }
 
+enum PaymentStatus {
+  deposit_paid
+  refunded
+  non_refundable
+}
+
 enum NotificationType {
   reservation_confirmed
   reservation_cancelled
@@ -121,6 +127,10 @@ model Reservation {
   guests          Int
   price           Float
   status          ReservationStatus @default(upcoming)
+  depositAmount   Float
+  balanceDue      Float
+  paymentIntentId String?           @unique
+  paymentStatus   PaymentStatus     @default(deposit_paid)
   bookingRef      String            @unique
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
