@@ -54,6 +54,7 @@ export default function Login() {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <TextInput
+                testID="login-email"
                 style={styles.input}
                 placeholder="Enter your email"
                 keyboardType="email-address"
@@ -66,6 +67,7 @@ export default function Login() {
             <View style={[styles.inputContainer, { position: 'relative' }]}>
               <Text style={styles.label}>Password</Text>
               <TextInput
+                testID="login-password"
                 style={styles.input}
                 placeholder="Enter your password"
                 secureTextEntry={!passwordVisible}
@@ -87,6 +89,7 @@ export default function Login() {
             </Link>
 
             <Pressable
+              testID="login-submit"
               onPress={handleLogin}
               disabled={isPending}
               style={({ pressed }) => [styles.button, { opacity: pressed ? 0.75 : 1 }]}

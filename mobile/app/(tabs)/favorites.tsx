@@ -72,6 +72,8 @@ export default function Favorites() {
               {/* Heart button — always filled, tap to remove */}
               <TouchableOpacity
                 style={styles.heartButton}
+                testID={`favorite-remove-${item.name}`}
+                accessibilityLabel="Remove from favorites"
                 onPress={() => removeFavorite(item._id)}
                 activeOpacity={0.8}
               >

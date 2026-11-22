@@ -118,6 +118,7 @@ export default function Home() {
         <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.bellWrapper}
+            testID="home-notifications"
             onPress={() => router.push("/notifications")}
             activeOpacity={0.8}
           >
@@ -136,6 +137,7 @@ export default function Home() {
       {/* Search */}
       <TouchableOpacity
         style={styles.searchSection}
+        testID="home-search"
         onPress={() => setSearchVisible(true)}
         activeOpacity={1}
       >
@@ -148,6 +150,7 @@ export default function Home() {
         />
         <TouchableOpacity
           style={styles.optionsWrapper}
+          testID="home-filter"
           onPress={() => router.push("/filter-sheet")}
           activeOpacity={0.8}
         >
@@ -239,6 +242,7 @@ export default function Home() {
             <TouchableOpacity
               key={dest._id}
               style={styles.destinationCard}
+              testID={`destination-card-${dest.name}`}
               onPress={() => openDestination(dest._id)}
               activeOpacity={0.95}
             >
@@ -253,6 +257,8 @@ export default function Home() {
                 </BlurView>
                 <TouchableOpacity
                   style={styles.heartButton}
+                  testID={`favorite-toggle-${dest.name}`}
+                  accessibilityLabel={favoriteIds.has(dest._id) ? "Remove from favorites" : "Add to favorites"}
                   onPress={() => onToggleFavorite(dest._id)}
                   activeOpacity={0.8}
                 >

@@ -1,0 +1,12 @@
+# Logs in with the seeded demo account (see backend/src/seeds/user.seed.js)
+appId: host.exp.exponent
+---
+- tapOn:
+    id: "login-email"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "login-password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "login-submit"

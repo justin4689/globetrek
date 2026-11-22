@@ -1,0 +1,44 @@
+# Opens GlobeTrek inside Expo Go and lands on the home screen (logging in if needed).
+# APP_URL is the Metro URL printed by `npx expo start` (exp://<LAN-IP>:8081).
+appId: host.exp.exponent
+---
+- launchApp:
+    stopApp: true
+- openLink: ${APP_URL}
+
+# Maestro matches text as a regex: "?" is escaped
+- extendedWaitUntil:
+    visible:
+      text: 'Login|Travelling Today \?|Development servers|Reload'
+    timeout: 60000
+
+# The deep link sometimes leaves us on Expo Go's home: open the project from the server list
+- runFlow:
+    when:
+      visible: "Development servers"
+    commands:
+      - tapOn:
+          text: "globetrek"
+          index: 0
+
+# Expo Go shows its developer menu the first time a project opens: dismiss it if present
+- runFlow:
+    when:
+      visible: "Reload"
+    commands:
+      - back
+
+- extendedWaitUntil:
+    visible:
+      text: 'Login|Travelling Today \?'
+    timeout: 60000
+
+- runFlow:
+    when:
+      visible:
+        id: "login-email"
+    file: login.yaml
+
+- extendedWaitUntil:
+    visible: 'Travelling Today \?'
+    timeout: 20000

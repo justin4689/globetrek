@@ -1,0 +1,10 @@
+# Maestro workspace: runs every flow in this folder (subflows are only called by other flows)
+flows:
+  - "*.yaml"
+executionOrder:
+  continueOnFailure: true
+  flowsOrder:
+    - search-and-filters
+    - favorites
+    - booking
+    - logout

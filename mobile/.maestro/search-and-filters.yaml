@@ -1,0 +1,51 @@
+# Search finds a destination, shows an empty state for an unknown place,
+# and the Luxury filter / Reset change the home grid.
+appId: host.exp.exponent
+name: Search and filters
+tags:
+  - smoke
+---
+- runFlow: subflows/launch.yaml
+
+# --- Search
+- tapOn:
+    id: "home-search"
+- tapOn:
+    id: "search-input"
+- inputText: "Paris"
+- extendedWaitUntil:
+    visible: "France"
+    timeout: 10000
+- eraseText: 10
+- inputText: "atlantide"
+- extendedWaitUntil:
+    visible: 'No results for "atlantide"'
+    timeout: 10000
+- back # close the keyboard
+- runFlow:
+    when:
+      visible: 'No results for "atlantide"'
+    commands:
+      - back # close the search screen
+
+# --- Filters: Luxury keeps only destinations from $500
+- tapOn:
+    id: "home-filter"
+- tapOn: "Luxury"
+- tapOn: "Apply filters"
+- extendedWaitUntil:
+    visible:
+      id: "destination-card-Paris"
+    timeout: 10000
+- assertNotVisible:
+    id: "destination-card-Grace Bay Beach"
+
+# --- Reset brings every destination back
+- tapOn:
+    id: "home-filter"
+- tapOn: "Reset"
+- scrollUntilVisible:
+    element:
+      id: "destination-card-Grace Bay Beach"
+    direction: DOWN
+    timeout: 15000

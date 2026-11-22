@@ -1,0 +1,58 @@
+# Main journey: open a destination, book it for 2 guests, check the reservation, then cancel it
+# (cancelling keeps the demo data clean between runs).
+appId: host.exp.exponent
+name: Book and cancel a trip
+tags:
+  - smoke
+  - critical
+---
+- runFlow: subflows/launch.yaml
+
+- scrollUntilVisible:
+    element:
+      id: "destination-card-Grace Bay Beach"
+    direction: DOWN
+    timeout: 15000
+- tapOn:
+    id: "destination-card-Grace Bay Beach"
+- extendedWaitUntil:
+    visible: "per night · per guest"
+    timeout: 15000
+
+- tapOn:
+    id: "detail-book"
+- extendedWaitUntil:
+    visible: "Book your trip"
+    timeout: 15000
+
+# Default stay is 3 nights for 1 guest: add a guest and check the live price
+- tapOn:
+    id: "book-guests-plus"
+- assertVisible: "2 guests"
+- assertVisible: ".*× 3 nights × 2 guests"
+
+- tapOn:
+    id: "book-confirm"
+
+# The new reservation opens on its detail screen
+- extendedWaitUntil:
+    visible: "Booking reference"
+    timeout: 20000
+- assertVisible: "Upcoming"
+- assertVisible: "Grace Bay Beach"
+- assertVisible: "2 guests"
+
+# Cancel it
+- tapOn:
+    id: "reservation-cancel"
+- tapOn: "Cancel booking"
+- extendedWaitUntil:
+    visible: "per night · per guest" # back on the destination detail
+    timeout: 15000
+
+# The cancellation shows up in Reservations › Past
+- back
+- tapOn: "Reservations"
+- tapOn: "Past"
+- assertVisible: "Cancelled"
+- tapOn: "Home"

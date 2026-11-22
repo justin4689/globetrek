@@ -217,6 +217,7 @@ export default function ReservationDetail() {
           <TouchableOpacity
             style={styles.cancelBtn}
             activeOpacity={0.85}
+            testID="reservation-cancel"
             onPress={handleCancel}
             disabled={cancelReservation.isPending}
           >

@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test:e2e": "maestro test .maestro -e APP_URL=${APP_URL:-exp://192.168.1.6:8081} -e EMAIL=${E2E_EMAIL:-justin@globetrek.com} -e PASSWORD=${E2E_PASSWORD:-password123}"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

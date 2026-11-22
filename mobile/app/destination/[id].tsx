@@ -266,6 +266,7 @@ export default function DestinationDetail() {
       {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity
+          testID="detail-book"
           style={styles.bookBtn}
           activeOpacity={0.85}
           onPress={() => router.push({ pathname: "/book/[id]", params: { id: destination._id } })}
@@ -273,6 +274,8 @@ export default function DestinationDetail() {
           <Text style={styles.bookText}>Book</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          testID="detail-favorite"
+          accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
           style={styles.bookmarkBtn}
           activeOpacity={0.85}
           onPress={() => toggleFavorite.mutate({ destinationId: destination._id, isFavorite })}

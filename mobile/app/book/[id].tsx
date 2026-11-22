@@ -204,6 +204,7 @@ export default function Book() {
               onPress={() => setGuests((g) => Math.min(MAX_GUESTS, g + 1))}
               disabled={guests >= MAX_GUESTS}
               accessibilityLabel="Add a guest"
+              testID="book-guests-plus"
             >
               <Ionicons name="add" size={18} color={guests >= MAX_GUESTS ? "#ccc" : Colors.textColor} />
             </TouchableOpacity>
@@ -232,6 +233,7 @@ export default function Book() {
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity
           style={[styles.confirmBtn, book.isPending && { opacity: 0.75 }]}
+          testID="book-confirm"
           onPress={() => book.mutate()}
           disabled={book.isPending}
           activeOpacity={0.85}

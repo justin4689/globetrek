@@ -245,7 +245,7 @@ export default function Profil() {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} activeOpacity={0.8} onPress={handleLogout}>
+        <TouchableOpacity testID="profile-logout" style={styles.logoutButton} activeOpacity={0.8} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </ScrollView>

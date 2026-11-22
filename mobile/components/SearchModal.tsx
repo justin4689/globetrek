@@ -122,6 +122,7 @@ export default function SearchModal({ visible, onClose }: Props) {
             <View style={styles.inputWrapper}>
               <Ionicons name="search" size={18} color="#999" />
               <TextInput
+                testID="search-input"
                 key={inputSeed.key}
                 ref={inputRef}
                 autoFocus={inputSeed.key > 0}

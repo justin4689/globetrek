@@ -1,0 +1,40 @@
+# Adding a favorite from home shows it in the Favorites tab; removing it there clears it.
+appId: host.exp.exponent
+name: Favorites
+tags:
+  - smoke
+---
+- runFlow: subflows/launch.yaml
+
+# Start clean if a previous run left Paris in favorites
+- runFlow:
+    when:
+      visible:
+        id: "favorite-toggle-Paris"
+        text: "Remove from favorites"
+    commands:
+      - tapOn:
+          id: "favorite-toggle-Paris"
+
+- tapOn:
+    id: "favorite-toggle-Paris"
+- extendedWaitUntil:
+    visible:
+      id: "favorite-toggle-Paris"
+      text: "Remove from favorites"
+    timeout: 10000
+
+- tapOn: "Favorites"
+- extendedWaitUntil:
+    visible:
+      id: "favorite-remove-Paris"
+    timeout: 10000
+
+- tapOn:
+    id: "favorite-remove-Paris"
+- extendedWaitUntil:
+    notVisible:
+      id: "favorite-remove-Paris"
+    timeout: 10000
+
+- tapOn: "Home"
