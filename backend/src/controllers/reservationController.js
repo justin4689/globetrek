@@ -3,6 +3,17 @@ const serialize = require('../utils/serialize');
 
 const STATUSES = ['upcoming', 'completed', 'cancelled'];
 
+// A stay is over once its check-out day has passed: flip those "upcoming" reservations to
+// "completed". Run before reading so lists and details are always up to date (no cron needed).
+const completePastStays = (userId) => {
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  return prisma.reservation.updateMany({
+    where: { userId, status: 'upcoming', checkOut: { lt: todayUtc } },
+    data: { status: 'completed' },
+  });
+};
+
 // Dates are stored at UTC midnight (date-only bookings): format them in UTC to keep the booked day
 const dayLabel = (date) => date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
@@ -59,6 +70,8 @@ const getReservations = async (req, res) => {
       where.status = status;
     }
 
+    await completePastStays(req.user.id);
+
     const reservations = await prisma.reservation.findMany({
       where,
       include: { destination: destinationSummary },
@@ -76,6 +89,8 @@ const getReservations = async (req, res) => {
 
 const getReservationById = async (req, res) => {
   try {
+    await completePastStays(req.user.id);
+
     const reservation = await prisma.reservation.findFirst({
       where: { id: req.params.id, userId: req.user.id },
       include: { destination: { include: { reviews: true } } },
@@ -111,6 +126,12 @@ const createReservation = async (req, res) => {
     const checkOutDate = new Date(checkOut);
     if (Number.isNaN(checkInDate.getTime()) || Number.isNaN(checkOutDate.getTime())) {
       return res.status(400).json({ success: false, message: 'Invalid checkIn or checkOut date' });
+    }
+
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    if (checkInDate.getTime() < todayUtc) {
+      return res.status(400).json({ success: false, message: 'checkIn cannot be in the past' });
     }
 
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
@@ -162,6 +183,8 @@ const createReservation = async (req, res) => {
 
 const cancelReservation = async (req, res) => {
   try {
+    await completePastStays(req.user.id);
+
     const reservation = await prisma.reservation.findFirst({
       where: { id: req.params.id, userId: req.user.id },
     });
