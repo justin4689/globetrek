@@ -1,5 +1,6 @@
 import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
+import { DEPOSIT_PERCENT, isRefundable } from "@/utils/deposit";
 import { useCancelReservation, useReservation } from "@/hooks/queries/useReservationQueries";
 import type { ApiReservation } from "@/services/reservationService";
 import { imageSource } from "@/utils/api";
@@ -28,6 +29,12 @@ const STATUS_CONFIG: Record<
   upcoming:  { bg: "#EBF5FF", text: "#1E90FF", label: "Upcoming",  icon: "time-outline" },
   completed: { bg: "#E9FBF0", text: "#27AE60", label: "Completed", icon: "checkmark-circle-outline" },
   cancelled: { bg: "#FEEFEF", text: "#E74C3C", label: "Cancelled", icon: "close-circle-outline" },
+};
+
+// What happened to the deposit of a cancelled reservation
+const PAYMENT_OUTCOME: Partial<Record<ApiReservation["paymentStatus"], { label: string; color: string }>> = {
+  refunded: { label: "Deposit refunded", color: "#27AE60" },
+  non_refundable: { label: "Deposit non-refundable", color: "#E74C3C" },
 };
 
 function formatDate(dateStr: string) {
@@ -85,11 +92,17 @@ export default function ReservationDetail() {
   // Total = nightly price × nights × guests (same formula as the API)
   const pricePerNight = Math.round(reservation.price / (numNights * reservation.guests));
   const destinationId = reservation.destination?._id;
+  const payment = reservation.status === "cancelled" ? PAYMENT_OUTCOME[reservation.paymentStatus] : undefined;
 
   const handleCancel = () => {
+    // Same 48 h rule as the API, which stays the judge of the actual refund
+    const deposit = formatPrice(reservation.depositAmount);
+    const depositNote = isRefundable(reservation.checkIn)
+      ? `Your deposit of ${deposit} will be refunded.`
+      : `Your deposit of ${deposit} is non-refundable (less than 48 hours before arrival).`;
     Alert.alert(
       "Cancel Reservation",
-      "Are you sure you want to cancel this reservation? This action cannot be undone.",
+      `${depositNote} This action cannot be undone.`,
       [
         { text: "Keep it", style: "cancel" },
         {
@@ -185,16 +198,30 @@ export default function ReservationDetail() {
             </View>
             <View style={styles.cardDivider} />
             <View style={styles.priceRow}>
-              <Text style={styles.priceRowLabel}>Service fee</Text>
-              <Text style={styles.priceRowValue}>$0</Text>
-            </View>
-            <View style={styles.cardDivider} />
-            <View style={styles.priceRow}>
               <Text style={[styles.priceRowLabel, styles.totalLabel]}>Total</Text>
               <Text style={[styles.priceRowValue, styles.totalValue]}>
                 {formatPrice(reservation.price)}
               </Text>
             </View>
+            <View style={styles.cardDivider} />
+            <View style={styles.priceRow}>
+              <Text style={styles.priceRowLabel}>Deposit paid ({DEPOSIT_PERCENT}%)</Text>
+              <Text style={styles.priceRowValue}>{formatPrice(reservation.depositAmount)}</Text>
+            </View>
+            {reservation.status !== "cancelled" && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceRowLabel}>Pay at the property</Text>
+                <Text style={styles.priceRowValue}>{formatPrice(reservation.balanceDue)}</Text>
+              </View>
+            )}
+            {payment && (
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceRowLabel, { color: payment.color }]}>{payment.label}</Text>
+                <Text style={[styles.priceRowValue, { color: payment.color }]}>
+                  {formatPrice(reservation.depositAmount)}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={{ height: 100 }} />
