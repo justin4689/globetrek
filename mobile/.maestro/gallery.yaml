@@ -1,0 +1,45 @@
+# Destination photos: swipe the cover, open the "+N" tile full screen, close it on the photo reached
+appId: ${APP_ID}
+name: Browse destination photos
+---
+- runFlow: subflows/launch.yaml
+- scrollUntilVisible:
+    element:
+      id: "destination-card-Paris"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "destination-card-Paris"
+- extendedWaitUntil:
+    visible: ".*per night · per guest.*"
+    timeout: 15000
+- assertVisible: "1 / 7"
+
+- swipe:
+    start: "85%,25%"
+    end: "10%,25%"
+- waitForAnimationToEnd
+- assertVisible: "2 / 7"
+
+# "+4" opens every photo full screen, starting with the first hidden one
+- tapOn:
+    id: "detail-more-photos"
+- extendedWaitUntil:
+    visible:
+      id: "photo-gallery"
+    timeout: 10000
+- assertVisible: "4 / 7"
+- swipe:
+    start: "85%,50%"
+    end: "10%,50%"
+- waitForAnimationToEnd
+- assertVisible: "5 / 7"
+
+# Closing comes back to the detail screen on the photo reached
+- tapOn:
+    id: "photo-gallery-close"
+- waitForAnimationToEnd
+- assertVisible: "5 / 7"
+- assertVisible: ".*per night · per guest.*"
+- tapOn:
+    id: "detail-back"

@@ -1,3 +1,4 @@
+import { PhotoGallery } from "@/components/PhotoGallery";
 import { DetailSkeleton } from "@/components/Skeleton";
 import { formatPrice } from "@/utils/format";
 import { useDestination } from "@/hooks/queries/useDestinationQueries";
@@ -84,7 +85,9 @@ export default function DestinationDetail() {
   const [activeTab, setActiveTab] = useState<"description" | "reviews">("description");
   const [activeReview, setActiveReview] = useState(0);
   const [activeImage, setActiveImage] = useState(0);
+  const [galleryStart, setGalleryStart] = useState<number | null>(null);
   const reviewsRef = useRef<FlatList>(null);
+  const heroRef = useRef<FlatList<string>>(null);
 
   if (isPending) return <DetailSkeleton heroHeight={HERO_HEIGHT} />;
 
@@ -112,6 +115,19 @@ export default function DestinationDetail() {
   const extraCount = images.length - 3;
   const isFavorite = favoriteIds.has(destination._id);
 
+  const showImage = (i: number) => {
+    setActiveImage(i);
+    heroRef.current?.scrollToIndex({ index: i, animated: true });
+  };
+
+  const onHeroScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
+    setActiveImage(Math.round(e.nativeEvent.contentOffset.x / width));
+
+  const closeGallery = (lastIndex: number) => {
+    setGalleryStart(null);
+    showImage(lastIndex); // come back on the photo the user stopped at
+  };
+
   const onReviewScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / REVIEW_CARD_WIDTH);
     setActiveReview(index);
@@ -122,11 +138,32 @@ export default function DestinationDetail() {
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         {/* Hero */}
         <View style={styles.heroContainer}>
-          <Image
-            source={imageSource(images[activeImage] ?? images[0])}
-            style={styles.heroImage}
-            resizeMode="cover"
+          {/* Swipe between photos, tap one to open it full screen */}
+          <FlatList
+            ref={heroRef}
+            data={images}
+            keyExtractor={(img, i) => `${i}-${img}`}
+            horizontal
+            pagingEnabled
+            bounces={false}
+            showsHorizontalScrollIndicator={false}
+            getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+            onMomentumScrollEnd={onHeroScroll}
+            renderItem={({ item, index }) => (
+              <TouchableOpacity activeOpacity={1} onPress={() => setGalleryStart(index)}>
+                <Image source={imageSource(item)} style={styles.heroImage} resizeMode="cover" />
+              </TouchableOpacity>
+            )}
           />
+
+          {images.length > 1 && (
+            <View style={[styles.photoCounter, { top: insets.top + 18 }]} pointerEvents="none">
+              <Ionicons name="images-outline" size={13} color="#fff" />
+              <Text style={styles.photoCounterText}>
+                {activeImage + 1} / {images.length}
+              </Text>
+            </View>
+          )}
 
           {/* Back button */}
           <TouchableOpacity
@@ -146,17 +183,19 @@ export default function DestinationDetail() {
                 key={i}
                 style={[styles.thumbWrapper, activeImage === i && styles.thumbActive]}
                 activeOpacity={0.85}
-                onPress={() => setActiveImage(i)}
+                onPress={() => showImage(i)}
               >
                 <Image source={imageSource(img)} style={styles.thumb} resizeMode="cover" />
               </TouchableOpacity>
             ))}
             {extraCount > 0 && (
-              // Each tap shows the next of the remaining photos
+              // Opens every photo full screen, starting with the first hidden one
               <TouchableOpacity
                 style={[styles.thumbWrapper, activeImage >= 3 && styles.thumbActive]}
                 activeOpacity={0.85}
-                onPress={() => setActiveImage((i) => (i >= 3 && i < images.length - 1 ? i + 1 : 3))}
+                onPress={() => setGalleryStart(3)}
+                testID="detail-more-photos"
+                accessibilityLabel={`See ${extraCount} more photos`}
               >
                 <Image
                   source={imageSource(images[3])}
@@ -265,6 +304,8 @@ export default function DestinationDetail() {
         </View>
       </ScrollView>
 
+      <PhotoGallery images={images} startIndex={galleryStart} onClose={closeGallery} />
+
       {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         <TouchableOpacity
@@ -318,8 +359,24 @@ const styles = StyleSheet.create({
     height: HERO_HEIGHT,
   },
   heroImage: {
-    width: "100%",
-    height: "100%",
+    width,
+    height: HERO_HEIGHT,
+  },
+  photoCounter: {
+    position: "absolute",
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  photoCounterText: {
+    color: "#fff",
+    fontFamily: Fonts.medium,
+    fontSize: 12,
   },
   backBtn: {
     position: "absolute",

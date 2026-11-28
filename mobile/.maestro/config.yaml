@@ -6,5 +6,6 @@ executionOrder:
   flowsOrder:
     - search-and-filters
     - favorites
+    - gallery
     - booking
     - logout
