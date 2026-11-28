@@ -1,13 +1,25 @@
+import Constants from "expo-constants";
 import { storage } from "./storage";
 
-// Set in mobile/.env. In development, point it at your machine's LAN IP (not localhost:
-// on a phone or simulator, localhost is the device itself).
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
-if (!API_URL) {
+const DEV_API_PORT = 5001;
+
+/**
+ * API base URL. EXPO_PUBLIC_API_URL (mobile/.env) wins when set. Otherwise, in development, the API
+ * is assumed to run on the machine serving the bundle: its LAN address comes from Metro's host, so
+ * the app keeps working when the Wi-Fi (and the IP) changes. (Not localhost: on a phone or
+ * simulator, localhost is the device itself.)
+ */
+function resolveApiUrl() {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+  if (fromEnv) return fromEnv;
+
+  const metroHost = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (__DEV__ && metroHost) return `http://${metroHost}:${DEV_API_PORT}/api`;
+
   throw new Error("EXPO_PUBLIC_API_URL is missing: add it to mobile/.env (see .env.example)");
 }
 
-export const BASE_URL = API_URL.replace(/\/$/, "");
+export const BASE_URL = resolveApiUrl().replace(/\/$/, "");
 
 export const API_ORIGIN = BASE_URL.replace(/\/api$/, "");
 
