@@ -18,9 +18,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Destination photos (stored in DB as "/images/<file>", resolved by the client against the API origin).
+// Served before the rate limiter: one screen loads many photos, they must not eat the API quota.
+app.use('/images', express.static(require('path').join(__dirname, '../public/images'), { maxAge: '7d' }));
+
+// A single app session easily makes a hundred API calls (lists, details, refreshes):
+// the general limit only stops abuse, the strict one below guards authentication
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 1000,
   message: 'Too many requests from this IP, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
@@ -34,9 +40,6 @@ const authLimiter = rateLimit({
 });
 
 app.use(express.json({ limit: '10mb' }));
-
-// Destination photos (stored in DB as "/images/<file>", resolved by the client against the API origin)
-app.use('/images', express.static(require('path').join(__dirname, '../public/images'), { maxAge: '7d' }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
