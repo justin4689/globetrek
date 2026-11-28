@@ -5,7 +5,7 @@ import { reservationService } from "@/services/reservationService";
 import { ApiError, imageSource } from "@/utils/api";
 import { Colors, Fonts, FontSizes } from "@/utils/constants";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { DEPOSIT_PERCENT, splitDeposit } from "@/utils/deposit";
 import { PaymentSheetError, useStripe } from "@stripe/stripe-react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -120,11 +120,11 @@ export default function Book() {
         : Alert.alert("Payment failed", err instanceof Error ? err.message : "Please try again."),
   });
 
-  const onDateChange = (event: DateTimePickerEvent, date?: Date) => {
+  const onDateChange = (_event: DateTimePickerChangeEvent, date: Date) => {
     const field = picker;
-    // Android shows a dialog: close it whatever the user picked
+    // Android shows a dialog: it closes once a date is picked
     if (Platform.OS === "android") setPicker(null);
-    if (event.type !== "set" || !date || !field) return;
+    if (!field) return;
 
     const day = startOfDay(date);
     if (field === "checkIn") {
@@ -224,7 +224,8 @@ export default function Book() {
             mode="date"
             display={Platform.OS === "ios" ? "inline" : "default"}
             minimumDate={picker === "checkIn" ? today : addDays(checkIn, 1)}
-            onChange={onDateChange}
+            onValueChange={onDateChange}
+            onDismiss={() => setPicker(null)}
             accentColor={Colors.primaryColor}
           />
         )}
