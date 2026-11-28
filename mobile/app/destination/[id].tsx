@@ -133,6 +133,8 @@ export default function DestinationDetail() {
             style={[styles.backBtn, { top: insets.top + 12 }]}
             onPress={() => router.back()}
             activeOpacity={0.85}
+            testID="detail-back"
+            accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color={Colors.textColor} />
           </TouchableOpacity>

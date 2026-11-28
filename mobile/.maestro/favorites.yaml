@@ -1,5 +1,5 @@
 # Adding a favorite from home shows it in the Favorites tab; removing it there clears it.
-appId: host.exp.exponent
+appId: ${APP_ID}
 name: Favorites
 tags:
   - smoke
@@ -24,7 +24,8 @@ tags:
       text: "Remove from favorites"
     timeout: 10000
 
-- tapOn: "Favorites"
+- tapOn:
+    id: "tab-favorites"
 - extendedWaitUntil:
     visible:
       id: "favorite-remove-Paris"
@@ -37,4 +38,5 @@ tags:
       id: "favorite-remove-Paris"
     timeout: 10000
 
-- tapOn: "Home"
+- tapOn:
+    id: "tab-home"

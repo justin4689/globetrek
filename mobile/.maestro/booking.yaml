@@ -1,6 +1,6 @@
 # Main journey: open a destination, book it for 2 guests, check the reservation, then cancel it
 # (cancelling keeps the demo data clean between runs).
-appId: host.exp.exponent
+appId: ${APP_ID}
 name: Book and cancel a trip
 tags:
   - smoke
@@ -16,30 +16,30 @@ tags:
 - tapOn:
     id: "destination-card-Grace Bay Beach"
 - extendedWaitUntil:
-    visible: "per night · per guest"
+    visible: ".*per night · per guest.*"
     timeout: 15000
 
 - tapOn:
     id: "detail-book"
 - extendedWaitUntil:
-    visible: "Book your trip"
+    visible: ".*Book your trip.*"
     timeout: 15000
 
 # Default stay is 3 nights for 1 guest: add a guest and check the live price
 - tapOn:
     id: "book-guests-plus"
-- assertVisible: "2 guests"
+- assertVisible: ".*2 guests.*"
 - assertVisible: ".*× 3 nights × 2 guests"
 
 # The 30% deposit is shown before paying
-- assertVisible: "Deposit due now.*"
+- assertVisible: ".*Deposit due now.*"
 - tapOn:
     id: "book-confirm"
 
 # Pay the deposit with Stripe's test card in the payment sheet
 - extendedWaitUntil:
-    visible: "Card information"
-    timeout: 60000
+    visible: ".*Card information.*"
+    timeout: 120000 # creating the payment goes through Stripe: allow for a slow network
 - tapOn:
     below: "Card information"
 - inputText: "4242424242424242"
@@ -47,21 +47,21 @@ tags:
 - inputText: "123" # CVC
 - runFlow:
     when:
-      visible: "ZIP.*"
+      visible: ".*ZIP.*"
     commands:
-      - tapOn: "ZIP.*"
+      - tapOn: ".*ZIP.*"
       - inputText: "12345"
-- tapOn: "Pay .*"
+- tapOn: "Pay [^dw].*[0-9].*" # the sheet's "Pay $X" button, not "Pay deposit" or "Pay with Link"
 
 # The new reservation opens on its detail screen
 - extendedWaitUntil:
-    visible: "Booking reference"
+    visible: ".*Booking reference.*"
     timeout: 60000
-- assertVisible: "Upcoming"
-- assertVisible: "Grace Bay Beach"
-- assertVisible: "2 guests"
+- assertVisible: ".*Upcoming.*"
+- assertVisible: ".*Grace Bay Beach.*"
+- assertVisible: ".*2 guests.*"
 - scrollUntilVisible:
-    element: "Deposit paid.*"
+    element: ".*Deposit paid.*"
     direction: DOWN
 
 # Cancel it: the default check-in is tomorrow, less than 48 h away, so the deposit is kept
@@ -70,12 +70,15 @@ tags:
 - assertVisible: ".*non-refundable.*"
 - tapOn: "Cancel booking"
 - extendedWaitUntil:
-    visible: "per night · per guest" # back on the destination detail
+    visible: ".*per night · per guest.*" # back on the destination detail
     timeout: 15000
 
 # The cancellation shows up in Reservations › Past
-- back
-- tapOn: "Reservations"
-- tapOn: "Past"
-- assertVisible: "Cancelled"
-- tapOn: "Home"
+- tapOn:
+    id: "detail-back"
+- tapOn:
+    id: "tab-reservations"
+- tapOn: ".*Past.*"
+- assertVisible: ".*Cancelled.*"
+- tapOn:
+    id: "tab-home"

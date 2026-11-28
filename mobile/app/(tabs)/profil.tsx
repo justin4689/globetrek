@@ -45,7 +45,7 @@ export default function Profil() {
 
   const handleLogout = () => {
     Alert.alert(
-      'Log out',
+      'Log out?',
       'Are you sure you want to log out?',
       [
         { text: 'Cancel', style: 'cancel' },

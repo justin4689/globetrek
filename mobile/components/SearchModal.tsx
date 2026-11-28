@@ -116,7 +116,12 @@ export default function SearchModal({ visible, onClose }: Props) {
         >
           {/* Search bar row */}
           <View style={styles.searchRow}>
-            <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.backBtn}
+              testID="search-close"
+              accessibilityLabel="Close search"
+            >
               <Ionicons name="arrow-back" size={24} color={Colors.textColor} />
             </TouchableOpacity>
             <View style={styles.inputWrapper}>

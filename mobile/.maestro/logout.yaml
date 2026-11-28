@@ -1,17 +1,18 @@
 # Logging out returns to the login screen. Runs last because it ends the session.
-appId: host.exp.exponent
+appId: ${APP_ID}
 name: Logout
 ---
 - runFlow: subflows/launch.yaml
 
-- tapOn: "Profile"
+- tapOn:
+    id: "tab-profile"
 - scrollUntilVisible:
     element:
       id: "profile-logout"
     direction: DOWN
 - tapOn:
     id: "profile-logout"
-- tapOn: "Log out" # confirm in the dialog
+- tapOn: "Log out" # the dialog button (its title is "Log out?")
 - extendedWaitUntil:
     visible:
       id: "login-email"

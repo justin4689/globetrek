@@ -1,6 +1,6 @@
 # Search finds a destination, shows an empty state for an unknown place,
 # and the Luxury filter / Reset change the home grid.
-appId: host.exp.exponent
+appId: ${APP_ID}
 name: Search and filters
 tags:
   - smoke
@@ -14,25 +14,21 @@ tags:
     id: "search-input"
 - inputText: "Paris"
 - extendedWaitUntil:
-    visible: "France"
+    visible: ".*France.*"
     timeout: 10000
 - eraseText: 10
 - inputText: "atlantide"
 - extendedWaitUntil:
-    visible: 'No results for "atlantide"'
+    visible: '.*No results for "atlantide".*'
     timeout: 10000
-- back # close the keyboard
-- runFlow:
-    when:
-      visible: 'No results for "atlantide"'
-    commands:
-      - back # close the search screen
+- tapOn:
+    id: "search-close"
 
 # --- Filters: Luxury keeps only destinations from $500
 - tapOn:
     id: "home-filter"
-- tapOn: "Luxury"
-- tapOn: "Apply filters"
+- tapOn: ".*Luxury.*"
+- tapOn: ".*Apply filters.*"
 - extendedWaitUntil:
     visible:
       id: "destination-card-Paris"
@@ -43,7 +39,7 @@ tags:
 # --- Reset brings every destination back
 - tapOn:
     id: "home-filter"
-- tapOn: "Reset"
+- tapOn: ".*Reset.*"
 - scrollUntilVisible:
     element:
       id: "destination-card-Grace Bay Beach"

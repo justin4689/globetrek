@@ -1,5 +1,5 @@
 # Logs in with the seeded demo account (see backend/src/seeds/user.seed.js)
-appId: host.exp.exponent
+appId: ${APP_ID}
 ---
 - tapOn:
     id: "login-email"
@@ -7,6 +7,11 @@ appId: host.exp.exponent
 - tapOn:
     id: "login-password"
 - inputText: ${PASSWORD}
-- hideKeyboard
+# iOS has no system action to hide the keyboard; the Login button stays reachable above it
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
 - tapOn:
     id: "login-submit"

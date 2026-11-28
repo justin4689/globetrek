@@ -1,6 +1,6 @@
 # Opens GlobeTrek inside Expo Go and lands on the home screen (logging in if needed).
 # APP_URL is the Metro URL printed by `npx expo start` (exp://<LAN-IP>:8081).
-appId: host.exp.exponent
+appId: ${APP_ID}
 ---
 - launchApp:
     stopApp: true
@@ -25,8 +25,20 @@ appId: host.exp.exponent
 - runFlow:
     when:
       visible: "Reload"
+      platform: Android
     commands:
       - back
+- runFlow:
+    when:
+      visible: "Reload"
+      platform: iOS
+    commands:
+      - tapOn:
+          text: "Continue"
+          optional: true
+      - swipe:
+          start: "50%,20%"
+          end: "50%,95%"
 
 - extendedWaitUntil:
     visible:
@@ -37,7 +49,17 @@ appId: host.exp.exponent
     when:
       visible:
         id: "login-email"
-    file: login.yaml
+    commands:
+      - runFlow: login.yaml
+      - extendedWaitUntil:
+          notVisible:
+            id: "login-email"
+          timeout: 20000
+      # iOS then offers to save the password in a system sheet that hides the app from Maestro
+      # and cannot be tapped. Restarting the app dismisses it; the session is kept in secure storage.
+      - launchApp:
+          stopApp: true
+      - openLink: ${APP_URL}
 
 - extendedWaitUntil:
     visible: 'Travelling Today \?'
