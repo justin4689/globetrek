@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
-  /* Cards — mêmes styles que home.tsx */
+  /* Cards — same styles as home.tsx */
   destinationCard: {
     width: CARD_WIDTH,
     borderRadius: 16,

@@ -9,6 +9,7 @@
     "dev": "nodemon src/index.js",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
+    "db:sync-content": "node src/seeds/syncDestinationContent.js",
     "db:seed": "node src/seeds/destinationSeed.js && node src/seeds/user.seed.js && node src/seeds/reservationNotificationSeed.js",
     "postinstall": "prisma generate"
   },

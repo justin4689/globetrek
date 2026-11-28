@@ -48,7 +48,7 @@ function RootNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
 
-      {/* ── Routes protégées (authentifié) ───────────────────────────── */}
+      {/* ── Protected routes (signed in) ───────────────────────────── */}
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="destination/[id]" />
@@ -69,7 +69,7 @@ function RootNavigator() {
         />
       </Stack.Protected>
 
-      {/* ── Routes publiques (non authentifié) ───────────────────────── */}
+      {/* ── Public routes (signed out) ───────────────────────── */}
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="login" />

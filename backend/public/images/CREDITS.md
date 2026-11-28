@@ -51,17 +51,17 @@ The older `image*.jpg` files are no longer used by the seed.
 | grace-bay-beach-6.jpg | [Beaches Turks and Caicos 2.jpg](https://commons.wikimedia.org/wiki/File:Beaches_Turks_and_Caicos_2.jpg) | Captain-tucker | CC BY-SA 3.0 |
 | grace-bay-beach-7.jpg | [Beaches Turks and Caicos 11.jpg](https://commons.wikimedia.org/wiki/File:Beaches_Turks_and_Caicos_11.jpg) | Captain-tucker | CC BY-SA 3.0 |
 
-## Mont Everest
+## Mount Everest
 
 | File | Photo | Author | Licence |
 |---|---|---|---|
-| mont-everest-1.jpg | [Everest North Face toward Base Camp Tibet Luca Galuzzi 2006.jpg](https://commons.wikimedia.org/wiki/File:Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg) | Luca Galuzzi (Lucag) | CC BY-SA 2.5 |
-| mont-everest-2.jpg | [Everest, Nuptse, Khumbu Glacier, Nepal, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Everest,_Nuptse,_Khumbu_Glacier,_Nepal,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
-| mont-everest-3.jpg | [Everest, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Everest,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
-| mont-everest-4.jpg | [Namche.jpg](https://commons.wikimedia.org/wiki/File:Namche.jpg) | Chandra Chakradhar | CC BY-SA 4.0 |
-| mont-everest-5.jpg | [120408 Pheriche Pano 4k.jpg](https://commons.wikimedia.org/wiki/File:120408_Pheriche_Pano_4k.jpg) | Faj2323 | CC BY-SA 4.0 |
-| mont-everest-6.jpg | [Sagarmatha Everest Zone, Nepal, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Sagarmatha_Everest_Zone,_Nepal,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
-| mont-everest-7.jpg | [Aerial View of Peaks of Khumbu, Ngozumpa Glacier and Gokyo Lakes (crop).jpg](https://commons.wikimedia.org/wiki/File:Aerial_View_of_Peaks_of_Khumbu,_Ngozumpa_Glacier_and_Gokyo_Lakes_(crop).jpg) | Original: Megaurab09 Derivative work: UnpetitproleX | CC BY-SA 4.0 |
+| mount-everest-1.jpg | [Everest North Face toward Base Camp Tibet Luca Galuzzi 2006.jpg](https://commons.wikimedia.org/wiki/File:Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg) | Luca Galuzzi (Lucag) | CC BY-SA 2.5 |
+| mount-everest-2.jpg | [Everest, Nuptse, Khumbu Glacier, Nepal, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Everest,_Nuptse,_Khumbu_Glacier,_Nepal,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
+| mount-everest-3.jpg | [Everest, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Everest,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
+| mount-everest-4.jpg | [Namche.jpg](https://commons.wikimedia.org/wiki/File:Namche.jpg) | Chandra Chakradhar | CC BY-SA 4.0 |
+| mount-everest-5.jpg | [120408 Pheriche Pano 4k.jpg](https://commons.wikimedia.org/wiki/File:120408_Pheriche_Pano_4k.jpg) | Faj2323 | CC BY-SA 4.0 |
+| mount-everest-6.jpg | [Sagarmatha Everest Zone, Nepal, Himalayas.jpg](https://commons.wikimedia.org/wiki/File:Sagarmatha_Everest_Zone,_Nepal,_Himalayas.jpg) | Vyacheslav Argenberg | CC BY 4.0 |
+| mount-everest-7.jpg | [Aerial View of Peaks of Khumbu, Ngozumpa Glacier and Gokyo Lakes (crop).jpg](https://commons.wikimedia.org/wiki/File:Aerial_View_of_Peaks_of_Khumbu,_Ngozumpa_Glacier_and_Gokyo_Lakes_(crop).jpg) | Original: Megaurab09 Derivative work: UnpetitproleX | CC BY-SA 4.0 |
 
 ## Paris
 
