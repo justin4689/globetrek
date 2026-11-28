@@ -3,17 +3,12 @@ dotenv.config({ path: require('path').resolve(__dirname, '../../.env') });
 
 const { prisma } = require('../config/db');
 
-// Photos served by the API from backend/public/images (same set the mobile app shipped with)
-const PHOTOS = {
-  'Copacabana': [10, 11, 12, 13, 14, 15, 16],
-  'Whitehaven Beach': [11, 10, 12, 13, 14, 15, 18],
-  'Seychelles': [12, 11, 10, 13, 14, 15, 16],
-  'Grace Bay Beach': [13, 10, 11, 12, 14, 15, 18],
-  'Mont Everest': [16, 3, 4, 5, 6, 7, 8],
-  'Paris': [1, 2, 3, 4, 5, 6, 9],
-  'Machu Picchu': [2, 3, 4, 5, 7, 8, 9],
-};
-const img = (name) => PHOTOS[name].map((n) => `/images/image${n}.jpg`);
+// Photos served by the API from backend/public/images: 7 per destination, "<slug>-1.jpg" is the cover.
+// Sources and licences: backend/public/images/CREDITS.md
+const PHOTOS_PER_DESTINATION = 7;
+const slug = (name) => name.toLowerCase().replace(/\W+/g, '-');
+const img = (name) =>
+  Array.from({ length: PHOTOS_PER_DESTINATION }, (_, i) => `/images/${slug(name)}-${i + 1}.jpg`);
 
 const destinations = [
   {
