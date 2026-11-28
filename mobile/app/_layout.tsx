@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ActivityIndicator, StatusBar, View } from "react-native";
-import { useEffect } from "react";
+import { ActivityIndicator, Image, StatusBar, View } from "react-native";
+import { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { FiltersProvider } from "@/context/FiltersContext";
@@ -20,6 +20,23 @@ const queryClient = new QueryClient();
 
 SplashScreen.preventAutoHideAsync();
 
+// The branded launch screen stays at least this long, so the logo is seen instead of flashing by.
+// Longer in development: Expo Go keeps its own loading view on top for about a second more.
+const MIN_LAUNCH_SCREEN_MS = __DEV__ ? 2500 : 1200;
+
+function LaunchScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.backgroundColor }}>
+      <Image
+        source={require("../assets/image/logo-full.png")}
+        style={{ width: 240, height: 240 }}
+        accessibilityLabel="GlobeTrek"
+      />
+      <ActivityIndicator size="small" color={Colors.primaryColor} style={{ marginTop: 8 }} />
+    </View>
+  );
+}
+
 function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -31,18 +48,19 @@ function RootNavigator() {
     "Roboto-Thin": require("../assets/fonts/Roboto-Thin.ttf"),
   });
 
+  // Hand over from the native splash to the branded launch screen as soon as fonts are ready,
+  // then keep it on screen long enough for the logo to register
+  const fontsReady = fontsLoaded || !!fontError;
+  const [launchScreenDone, setLaunchScreenDone] = useState(false);
   useEffect(() => {
-    if ((fontsLoaded || fontError) && !isLoading) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError, isLoading]);
+    if (!fontsReady) return;
+    SplashScreen.hideAsync();
+    const timer = setTimeout(() => setLaunchScreenDone(true), MIN_LAUNCH_SCREEN_MS);
+    return () => clearTimeout(timer);
+  }, [fontsReady]);
 
-  if ((!fontsLoaded && !fontError) || isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: Colors.backgroundColor }}>
-        <ActivityIndicator size="large" color={Colors.primaryColor} />
-      </View>
-    );
+  if (!fontsReady || isLoading || !launchScreenDone) {
+    return <LaunchScreen />;
   }
 
   return (

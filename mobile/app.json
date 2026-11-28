@@ -4,7 +4,7 @@
     "slug": "globetrek",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon1.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "globetrek",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
